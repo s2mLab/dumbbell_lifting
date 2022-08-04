@@ -1,0 +1,9 @@
+# create a dev conda environment with: `make create_env` or `conda env create -f environment.yml`
+name: dumbell
+channels:
+- conda-forge
+- default
+dependencies:
+- python >=3.10
+- biorbd >=1.8.8
+- bioptim
