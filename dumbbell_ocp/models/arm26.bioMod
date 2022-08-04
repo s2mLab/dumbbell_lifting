@@ -100,6 +100,25 @@ endsegment
         parent    r_ulna_radius_hand
         position    0 -0.181479 0
     endmarker
+    
+segment dumbbell
+    parent r_ulna_radius_hand
+    RT 0 pi/2 0 xyz 0 -0.28 0.05
+    // RTinMatrix    1
+    // RT
+    //     -0.5953053712684069    0.803499542587912    0.0    0.0
+    //     0.08898397360606149    0.06592740211634747    0.9938487963928239    0.0
+    //     0.7985570533031812    0.5916435267212894    -0.11074551868375905    0.0
+    //     0.0    0.0    0.0    1.0
+    mass 3.6
+    inertia
+	0.00370584	0		0
+	0		0.04669628	0
+	0		0		0.04669628
+    com    0 0 0
+    meshfile mesh/the_dumbbell/dumbbell.stl
+endsegment
+
 
 
 // MUSCLE DEFINITION

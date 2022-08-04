@@ -132,3 +132,4 @@ dmypy.json
 
 # Do not version the results
 results/
+dumbbell_ocp/models/doc/model.png
