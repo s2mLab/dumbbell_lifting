@@ -206,7 +206,6 @@ class FatigueIntegrator:
         return fatigue.apply_dynamics(self.study.target_function.function(t) / fatigue.scaling, x)
 
     def _add_result_to_plot(self, model: FatigueModel, results: Result, plot_options: Any):
-        for y, color in zip(results.y, model.colors):
-            plt.plot(results.t, y * 100, color=color, **plot_options)
+        plt.stackplot(results.t, results.y * 100, colors=model.colors, alpha=0.4)
         if model.print_sum:
             plt.plot(results.t, np.sum(results.y * 100, axis=0), color="black", **plot_options)
