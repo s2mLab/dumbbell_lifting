@@ -13,6 +13,13 @@ from feasibility_studies import (
 )
 
 
+class CustomColor:
+    Green = "#00cc96"
+    Yellow = "#ffa15a"
+    Red = "#ef553b"
+    Gray = "tab:gray"
+
+
 class Study(Enum):
     # DEBUG OPTIONS
     DEBUG_XIA_ONLY = StudyConfiguration(
@@ -23,14 +30,14 @@ class Study(Enum):
                 integrator=Integrator.RK45,
                 x0=(0, 1, 0),
                 rms_indices=(0, 1, 2),
-                colors=("tab:green", "tab:orange", "tab:red"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
             ),
             FatigueModels.XIA(
                 FatigueParameters(F=1),
                 integrator=Integrator.RK45,
                 x0=(0, 1, 0),
                 rms_indices=(0, 1, 2),
-                colors=("tab:green", "tab:orange", "tab:red"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
             ),
         ),
         t_end=300,
@@ -50,7 +57,7 @@ class Study(Enum):
                 FatigueParameters(),
                 integrator=Integrator.RK45,
                 x0=(0, 1, 0),
-                colors=("tab:green", "tab:orange", "tab:red"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
             ),
         ),
         t_end=100,
@@ -71,14 +78,14 @@ class Study(Enum):
                 integrator=Integrator.RK45,
                 x0=(0, 1, 0),
                 rms_indices=(0, 1, 2),
-                colors=("tab:green", "tab:orange", "tab:red"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
             ),
             FatigueModels.XIA_STABILIZED(
                 FatigueParameters(stabilization_factor=100),
                 integrator=Integrator.RK45,
                 x0=(0, 1, 0),
                 rms_indices=(0, 1, 2),
-                colors=("tab:green", "tab:orange", "tab:red"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
             ),
         ),
         t_end=3600,
@@ -104,7 +111,7 @@ class Study(Enum):
                     2,
                     3,
                 ),
-                colors=("tab:green", "tab:orange", "tab:red", "tab:gray"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red, CustomColor.Gray),
             ),
             FatigueModels.MICHAUD(
                 FatigueParameters(effort_factor=0.1),
@@ -116,7 +123,7 @@ class Study(Enum):
                     2,
                     3,
                 ),
-                colors=("tab:green", "tab:orange", "tab:red", "tab:gray"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red, CustomColor.Gray),
             ),
         ),
         t_end=600,
@@ -136,7 +143,7 @@ class Study(Enum):
                 integrator=Integrator.RK45,
                 x0=(0,),
                 rms_indices=(0,),
-                colors=("tab:gray",),
+                colors=(CustomColor.Gray,),
             ),
         ),
         t_end=600,
@@ -157,18 +164,18 @@ class Study(Enum):
                 FatigueParameters(stabilization_factor=200),
                 integrator=Integrator.RK45,
                 x0=(0, 0.6, 0),
-                colors=("tab:green", "tab:orange", "tab:red"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
                 custom_analyses=(
                     CustomAnalysis(
-                        "First index with sum at 95%", lambda result: np.where(np.sum(result.y, axis=0) > 0.95)[0][0]
+                        "First index with sum at 99%", lambda result: np.where(np.sum(result.y, axis=0) > 0.99)[0][0]
                     ),
                     CustomAnalysis(
-                        "First time with sum at 95%",
-                        lambda result: result.t[np.where(np.sum(result.y, axis=0) > 0.95)[0][0]],
+                        "First time with sum at 99%",
+                        lambda result: result.t[np.where(np.sum(result.y, axis=0) > 0.99)[0][0]],
                     ),
                     CustomAnalysis(
-                        "Fatigue at same time with sum at 95%",
-                        lambda result: result.y[2, np.where(np.sum(result.y, axis=0) > 0.95)[0][0]],
+                        "Fatigue at same time with sum at 99%",
+                        lambda result: result.y[2, np.where(np.sum(result.y, axis=0) > 0.99)[0][0]],
                     ),
                     CustomAnalysis("Sum at the end of the trial", lambda result: np.sum(result.y, axis=0)[-1]),
                 ),
@@ -177,18 +184,18 @@ class Study(Enum):
                 FatigueParameters(stabilization_factor=100),
                 integrator=Integrator.RK45,
                 x0=(0, 0.6, 0),
-                colors=("tab:green", "tab:orange", "tab:red"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
                 custom_analyses=(
                     CustomAnalysis(
-                        "First index with sum at 95%", lambda result: np.where(np.sum(result.y, axis=0) > 0.95)[0][0]
+                        "First index with sum at 99%", lambda result: np.where(np.sum(result.y, axis=0) > 0.99)[0][0]
                     ),
                     CustomAnalysis(
-                        "First time with sum at 95%",
-                        lambda result: result.t[np.where(np.sum(result.y, axis=0) > 0.95)[0][0]],
+                        "First time with sum at 99%",
+                        lambda result: result.t[np.where(np.sum(result.y, axis=0) > 0.99)[0][0]],
                     ),
                     CustomAnalysis(
-                        "Fatigue at same time with sum at 95%",
-                        lambda result: result.y[2, np.where(np.sum(result.y, axis=0) > 0.95)[0][0]],
+                        "Fatigue at same time with sum at 99%",
+                        lambda result: result.y[2, np.where(np.sum(result.y, axis=0) > 0.99)[0][0]],
                     ),
                     CustomAnalysis("Sum at the end of the trial", lambda result: np.sum(result.y, axis=0)[-1]),
                 ),
@@ -197,18 +204,18 @@ class Study(Enum):
                 FatigueParameters(stabilization_factor=50),
                 integrator=Integrator.RK45,
                 x0=(0, 0.6, 0),
-                colors=("tab:green", "tab:orange", "tab:red"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
                 custom_analyses=(
                     CustomAnalysis(
-                        "First index with sum at 95%", lambda result: np.where(np.sum(result.y, axis=0) > 0.95)[0][0]
+                        "First index with sum at 99%", lambda result: np.where(np.sum(result.y, axis=0) > 0.99)[0][0]
                     ),
                     CustomAnalysis(
-                        "First time with sum at 95%",
-                        lambda result: result.t[np.where(np.sum(result.y, axis=0) > 0.95)[0][0]],
+                        "First time with sum at 99%",
+                        lambda result: result.t[np.where(np.sum(result.y, axis=0) > 0.99)[0][0]],
                     ),
                     CustomAnalysis(
-                        "Fatigue at same time with sum at 95%",
-                        lambda result: result.y[2, np.where(np.sum(result.y, axis=0) > 0.95)[0][0]],
+                        "Fatigue at same time with sum at 99%",
+                        lambda result: result.y[2, np.where(np.sum(result.y, axis=0) > 0.99)[0][0]],
                     ),
                     CustomAnalysis("Sum at the end of the trial", lambda result: np.sum(result.y[:, -1])),
                 ),
@@ -217,7 +224,7 @@ class Study(Enum):
                 FatigueParameters(stabilization_factor=0),
                 integrator=Integrator.RK45,
                 x0=(0, 0.6, 0),
-                colors=("tab:green", "tab:orange", "tab:red"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
                 custom_analyses=(
                     CustomAnalysis("Sum at the end of the trial", lambda result: np.sum(result.y[:, -1])),
                 ),
@@ -266,14 +273,14 @@ class Study(Enum):
                 FatigueParameters(stabilization_factor=100),
                 integrator=Integrator.RK45,
                 x0=(0, 1, 0),
-                colors=("tab:green", "tab:orange", "tab:red"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
                 rms_indices=(0, 1, 2),
             ),
             FatigueModels.XIA(
                 FatigueParameters(stabilization_factor=100),
                 integrator=Integrator.RK45,
                 x0=(0, 1, 0),
-                colors=("tab:green", "tab:orange", "tab:red"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
                 rms_indices=(0, 1, 2),
             ),
         ),
@@ -306,14 +313,14 @@ class Study(Enum):
                 FatigueParameters(stabilization_factor=100),
                 integrator=Integrator.RK45,
                 x0=(0, 0.6, 0),
-                colors=("tab:green", "tab:orange", "tab:red"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
                 rms_indices=(0, 1, 2),
             ),
             FatigueModels.XIA(
                 FatigueParameters(stabilization_factor=100),
                 integrator=Integrator.RK45,
                 x0=(0, 0.6, 0),
-                colors=("tab:green", "tab:orange", "tab:red"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
                 rms_indices=(0, 1, 2),
             ),
         ),
@@ -346,14 +353,14 @@ class Study(Enum):
                 FatigueParameters(),
                 integrator=Integrator.RK45,
                 x0=(1, 1, 0),
-                colors=("tab:green", "tab:orange", "tab:red"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
                 rms_indices=(0, 1, 2),
             ),
             FatigueModels.XIA(
                 FatigueParameters(),
                 integrator=Integrator.RK45,
                 x0=(1, 1, 0),
-                colors=("tab:green", "tab:orange", "tab:red"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
                 rms_indices=(0, 1, 2),
             ),
         ),
@@ -385,14 +392,14 @@ class Study(Enum):
                 FatigueParameters(),
                 integrator=Integrator.RK45,
                 x0=(0, 1, 0, 0),
-                colors=("tab:green", "tab:orange", "tab:red", "tab:gray"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red, CustomColor.Gray),
                 rms_indices=(),
             ),
             FatigueModels.XIA(
                 FatigueParameters(),
                 integrator=Integrator.RK45,
                 x0=(0, 1, 0),
-                colors=("tab:green", "tab:orange", "tab:red"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
                 rms_indices=(),
             ),
         ),
@@ -417,28 +424,28 @@ class Study(Enum):
                 FatigueParameters(effort_factor=0.0075, effort_threshold=0.5),
                 integrator=Integrator.RK45,
                 x0=(0, 1, 0, 0),
-                colors=("tab:green", "tab:orange", "tab:red", "tab:gray"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red, CustomColor.Gray),
                 rms_indices=(),
             ),
             FatigueModels.MICHAUD(
                 FatigueParameters(effort_factor=0.0050, effort_threshold=0.5),
                 integrator=Integrator.RK45,
                 x0=(0, 1, 0, 0),
-                colors=("tab:green", "tab:orange", "tab:red", "tab:gray"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red, CustomColor.Gray),
                 rms_indices=(),
             ),
             FatigueModels.MICHAUD(
                 FatigueParameters(effort_factor=0.0025, effort_threshold=0.5),
                 integrator=Integrator.RK45,
                 x0=(0, 1, 0, 0),
-                colors=("tab:green", "tab:orange", "tab:red", "tab:gray"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red, CustomColor.Gray),
                 rms_indices=(),
             ),
             FatigueModels.MICHAUD(
                 FatigueParameters(effort_factor=0.0000, effort_threshold=0.5),
                 integrator=Integrator.RK45,
                 x0=(0, 1, 0, 0),
-                colors=("tab:green", "tab:orange", "tab:red", "tab:gray"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red, CustomColor.Gray),
                 rms_indices=(),
             ),
         ),
@@ -497,25 +504,25 @@ class Study(Enum):
                 FatigueParameters(effort_threshold=0.75),
                 integrator=Integrator.RK45,
                 x0=(0, 1, 0, 0),
-                colors=("tab:green", "tab:orange", "tab:red", "tab:gray"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red, CustomColor.Gray),
             ),
             FatigueModels.MICHAUD(
                 FatigueParameters(effort_threshold=0.50),
                 integrator=Integrator.RK45,
                 x0=(0, 1, 0, 0),
-                colors=("tab:green", "tab:orange", "tab:red", "tab:gray"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red, CustomColor.Gray),
             ),
             FatigueModels.MICHAUD(
                 FatigueParameters(effort_threshold=0.25),
                 integrator=Integrator.RK45,
                 x0=(0, 1, 0, 0),
-                colors=("tab:green", "tab:orange", "tab:red", "tab:gray"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red, CustomColor.Gray),
             ),
             FatigueModels.MICHAUD(
                 FatigueParameters(effort_threshold=0.0001),
                 integrator=Integrator.RK45,
                 x0=(0, 1, 0, 0),
-                colors=("tab:green", "tab:orange", "tab:red", "tab:gray"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red, CustomColor.Gray),
             ),
         ),
         t_end=100,
@@ -577,7 +584,7 @@ class Study(Enum):
                 FatigueParameters(effort_threshold=0.5, F=0.01 / 4),
                 integrator=Integrator.RK45,
                 x0=(0, 1, 0, 0),
-                colors=("tab:green", "tab:orange", "tab:red", "tab:gray"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red, CustomColor.Gray),
                 rms_indices=(0, 1, 2),
                 custom_analyses=(
                     CustomAnalysis(
@@ -590,7 +597,7 @@ class Study(Enum):
                 FatigueParameters(F=0.01),
                 integrator=Integrator.RK45,
                 x0=(0, 1, 0),
-                colors=("tab:green", "tab:orange", "tab:red"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
                 rms_indices=(0, 1, 2),
             ),
         ),
@@ -645,7 +652,7 @@ class Study(Enum):
                     0,
                     0,
                 ),
-                colors=("tab:green", "tab:orange", "tab:red", "tab:gray"),
+                colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red, "tab:gray"),
                 rms_indices=(),
             ),
         ),

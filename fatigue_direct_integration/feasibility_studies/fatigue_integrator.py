@@ -94,16 +94,16 @@ class FatigueIntegrator:
         if not self._has_run:
             raise RuntimeError("run() must be called before plotting the results")
 
+        for model, result, plot_options in zip(
+            self.study.fatigue_models, self._results[-1], self.study.plot_options.options
+        ):
+            self._add_result_to_plot(model, result, plot_options)
         plt.plot(
             self.study.t,
             [self.study.target_function.function(t) * 100 for t in self.study.t],
             color="tab:blue",
             linewidth=4,
         )
-        for model, result, plot_options in zip(
-            self.study.fatigue_models, self._results[-1], self.study.plot_options.options
-        ):
-            self._add_result_to_plot(model, result, plot_options)
 
         self.axes.set_title(self.study.plot_options.title, fontsize=1.5 * font_size)
         self.axes.set_xlabel(r"Temps (\SI{}{\second})", fontsize=font_size)
