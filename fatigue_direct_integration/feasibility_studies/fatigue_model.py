@@ -68,6 +68,10 @@ class Xia(FatigueModel):
             x0 = model.default_initial_guess()
         super(Xia, self).__init__(model, *args, x0=x0, **kwargs)
 
+    @property
+    def table_name(self):
+        return type(self.model).__name__
+
 
 class XiaStabilized(FatigueModel):
     def __init__(self, fatigue_params: FatigueParameters, *args, x0: tuple[float, ...] = None, **kwargs):
@@ -82,6 +86,10 @@ class XiaStabilized(FatigueModel):
         if x0 is None:
             x0 = model.default_initial_guess()
         super(XiaStabilized, self).__init__(model, *args, x0=x0, **kwargs)
+
+    @property
+    def table_name(self):
+        return type(self.model).__name__ + f"_S{self.model.stabilization_factor}"
 
 
 class Michaud(FatigueModel):
@@ -100,6 +108,10 @@ class Michaud(FatigueModel):
             x0 = model.default_initial_guess()
         super(Michaud, self).__init__(model, *args, x0=x0, **kwargs)
 
+    @property
+    def table_name(self):
+        return type(self.model).__name__ + f"_S{self.model.stabilization_factor}"
+
 
 class EffortPerception(FatigueModel):
     def __init__(self, fatigue_params: FatigueParameters, *args, x0: tuple[float, ...] = None, **kwargs):
@@ -111,6 +123,10 @@ class EffortPerception(FatigueModel):
         if x0 is None:
             x0 = model.default_initial_guess()
         super(EffortPerception, self).__init__(model, *args, x0=x0, **kwargs)
+
+    @property
+    def table_name(self):
+        return type(self.model).__name__ + f"_S{self.model.stabilization_factor}"
 
 
 class FatigueModels:

@@ -5,10 +5,10 @@ from studies import Study
 def main():
     # Define the studies to perform
     all_studies = (
-        Study.STUDY1_1_XIA_STABILIZED,
-        Study.STUDY1_2_XIA_VS_STABILIZED_GOOD_X0,
-        Study.STUDY1_3_XIA_VS_STABILIZED_BAD_X0,
-        # Study.STUDY1_4_XIA_STABILIZED_FATIGUE_NEGATIVE,
+        Study.STUDY1_STABILIZER_EFFECT_LONG_TIME,
+        Study.STUDY1_STABILIZER_EFFECT_SHORT_TIME,
+        Study.STUDY2_STABILIZER_EFFECT_SAME_START,
+        Study.STUDY3_STABILIZER_EFFECT_SLIGHTLYBAD_START,
     )
 
     # Prepare and run the studies

@@ -30,9 +30,8 @@ class StudyConfiguration:
         self.target_function = TargetFunctionInternal(self.t_end, self.n_points, self.fixed_target, target_function)
         self.fatigue_models = fatigue_models
 
-        plot_options = PlotOptions() if plot_options is None else plot_options
         self.plot_options = plot_options
-        if len(self.plot_options.options) < len(self.fatigue_models):
+        if self.plot_options is not None and len(self.plot_options.options) < len(self.fatigue_models):
             raise ValueError("len(plot_options) must be >= len(fatigue_models)")
 
         self.common_custom_analyses = common_custom_analyses

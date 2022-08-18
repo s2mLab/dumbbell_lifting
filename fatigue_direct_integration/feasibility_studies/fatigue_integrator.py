@@ -82,17 +82,15 @@ class FatigueIntegrator:
         fig = plt.figure()
         fig.set_size_inches(16, 9)
         # plt.rcParams["text.usetex"] = True
-        # plt.rcParams["text.latex.preamble"] = (
-        #     r"\usepackage{siunitx}"
-        #     r"\newcommand{\tcc}{3\textsubscript{CC}}"
-        #     r"\newcommand{\tccs}{3S\textsubscript{CC}}"
-        #     r"\newcommand{\qcc}{4\textsubscript{CC}}"
-        #     r"\newcommand{\pe}{P\textsubscript{E}}"
-        # )
+        plt.rcParams["text.latex.preamble"] = (r"\usepackage{siunitx}", )
+        plt.rcParams["font.family"] = "Times New Roman"
         self.axes = plt.axes()
 
         if not self._has_run:
             raise RuntimeError("run() must be called before plotting the results")
+
+        if self.study.plot_options is None:
+            return
 
         for model, result, plot_options in zip(
             self.study.fatigue_models, self._results[-1], self.study.plot_options.options
@@ -108,6 +106,11 @@ class FatigueIntegrator:
         self.axes.set_title(self.study.plot_options.title, fontsize=1.5 * font_size)
         self.axes.set_xlabel(r"Temps (\SI{}{\second})", fontsize=font_size)
         self.axes.set_ylabel(r"Niveau (\SI{}{\percent})", fontsize=font_size)
+        self.axes.set_xlim(self.study.plot_options.xlim)
+        self.axes.set_ylim(self.study.plot_options.ylim)
+        if not self.study.plot_options.keep_frame:
+            self.axes.spines['top'].set_visible(False)
+            self.axes.spines['right'].set_visible(False)
         self.axes.tick_params(axis="both", labelsize=font_size)
         if self.study.plot_options.legend is not None:
             supplementary_legend = None
@@ -118,8 +121,17 @@ class FatigueIntegrator:
                     loc="lower right",
                     fontsize=font_size,
                     framealpha=0.9,
+                    title=self.study.plot_options.supplementary_legend_title,
+                    title_fontsize=20,
                 )
-            self.axes.legend(self.study.plot_options.legend, loc="upper right", fontsize=font_size, framealpha=0.9)
+            self.axes.legend(
+                self.study.plot_options.legend,
+                loc="upper right",
+                fontsize=font_size,
+                framealpha=0.9,
+                title=self.study.plot_options.legend_title,
+                title_fontsize=20,
+            )
             if supplementary_legend is not None:
                 self.axes.add_artist(supplementary_legend)
 
@@ -183,7 +195,7 @@ class FatigueIntegrator:
             for custom_analysis in self.study.common_custom_analyses:
                 table += f"{custom_analysis.name} \n"
                 for model, results in zip(self.study.fatigue_models, self._results[-1]):
-                    table += f"\tfor {type(model).__name__}: {custom_analysis.fun(results)}\n"
+                    table += f"\tfor {model.table_name}: {custom_analysis.fun(results)}\n"
 
         save_path = f"{self.prepare_and_get_results_dir()}/custom_analysis.txt"
         with open(save_path, "w", encoding="utf8") as file:
@@ -205,7 +217,10 @@ class FatigueIntegrator:
     def _dynamics(self, t, x, fatigue):
         return fatigue.apply_dynamics(self.study.target_function.function(t) / fatigue.scaling, x)
 
-    def _add_result_to_plot(self, model: FatigueModel, results: Result, plot_options: Any):
+    @staticmethod
+    def _add_result_to_plot(model: FatigueModel, results: Result, plot_options: Any):
         plt.stackplot(results.t, results.y * 100, colors=model.colors, alpha=0.4)
         if model.print_sum:
-            plt.plot(results.t, np.sum(results.y * 100, axis=0), color="black", **plot_options)
+            if "color" not in plot_options:
+                plot_options["color"] = "black"
+            plt.plot(results.t, np.sum(results.y * 100, axis=0), **plot_options)
