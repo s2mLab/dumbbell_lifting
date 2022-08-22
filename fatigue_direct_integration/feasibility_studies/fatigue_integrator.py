@@ -140,6 +140,12 @@ class FatigueIntegrator:
 
         if self.study.plot_options.save_path:
             plt.savefig(f"{self.prepare_and_get_results_dir()}/{self.study.plot_options.save_path}", dpi=100)
+            # remove the extention of plot_options.save_path[i]
+            self.study.plot_options.save_path = self.study.plot_options.save_path.split(".")[0]
+            # remove the extention of save_path to get the name of the file and save it as a pdf
+            plt.savefig(f"{self.prepare_and_get_results_dir()}/{self.study.plot_options.save_path}.pdf", format="pdf")
+            # and in eps format
+            plt.savefig(f"{self.prepare_and_get_results_dir()}/{self.study.plot_options.save_path}.eps", format="eps")
 
         plt.show()
 
