@@ -173,7 +173,7 @@ class Study(Enum):
         repeat=1,
         fatigue_models=(
             FatigueModels.XIA_STABILIZED(
-                FatigueParameters(stabilization_factor=100),
+                FatigueParameters(stabilization_factor=10),
                 integrator=Integrator.RK45,
                 x0=(0, 1-1e-4, 0),
                 rms_indices=(0, 1, 2),
@@ -186,7 +186,7 @@ class Study(Enum):
                 )
             ),
             FatigueModels.XIA_STABILIZED(
-                FatigueParameters(stabilization_factor=100),
+                FatigueParameters(stabilization_factor=10),
                 integrator=Integrator.RK45,
                 x0=(0, 1+1e-4, 0),
                 rms_indices=(0, 1, 2),
