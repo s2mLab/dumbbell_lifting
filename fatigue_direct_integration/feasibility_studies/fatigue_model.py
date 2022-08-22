@@ -6,12 +6,14 @@ from .enums import Integrator, CustomAnalysis
 
 
 class FatigueParameters:
+    # according to https://doi.org/10.1016/j.jbiomech.2018.06.005
+    # Elbow Parameters
     def __init__(
         self,
-        LD: float = 100,
-        LR: float = 100,
-        F: float = 0.005,
-        R: float = 0.005,
+        LD: float = 10,
+        LR: float = 10,
+        F: float = 0.00912,
+        R: float = 0.00094,
         scaling: float = 1,
         stabilization_factor: float = 10,
         effort_factor: float = 0.0075,
