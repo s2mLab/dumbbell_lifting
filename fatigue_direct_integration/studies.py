@@ -73,12 +73,12 @@ class Study(Enum):
         n_points=1000,
         plot_options=PlotOptions(
             title="",
-            legend=("$ M_A$", "$M_R$", "$M_F$", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "Target"),
+            legend=("$m_a$", "$m_r$", "$m_f$", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "$TL$"),
             supplementary_legend=("$S = 200$", "$S = 100$", "$S = 50$", "$S = 10$", "$S = 0$"),
-            supplementary_legend_title="$M_A + M_R + M_F$",
+            supplementary_legend_title="$m_a + m_r + m_f$",
             options=({"linestyle": "-"}, {"linestyle": "--"}, {"linestyle": "-."}, {"linestyle": ":"}, {"linestyle": "-", "linewidth": 3,}),
             save_path="STUDY1_STABILIZER_EFFECT.png",
-            xlim=(0, 1),
+            xlim=(0, 1.01),
             ylim=(0, 101),
             keep_frame=False,
         ),
@@ -165,6 +165,19 @@ class Study(Enum):
         common_custom_analyses=(
             CustomAnalysis("Sum of components at the final index", lambda results: np.sum(results.y[:, -1], axis=0)),
             CustomAnalysis("Fatigue at final node", lambda result: result.y[2, -1]),
+        ),
+        plot_options=PlotOptions(
+            title="",
+            legend=(
+            "$m_a$", "$m_r$", "$m_f$", "$m_a+m_r+m_f$", "_", "_", "_", "_", "$TL$", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_",
+            "_", "$TL$"),
+            # supplementary_legend=("$S = 200$", "$S = 100$", "$S = 50$", "$S = 10$", "$S = 0$"),
+            # supplementary_legend_title="$m_a + m_r + m_f$",
+            options=({"linestyle": "-"}, {"linestyle": "--"}),
+            save_path="STUDY2_STABILIZER_EFFECT_SAME_START.png",
+            xlim=(0, 60.1),
+            ylim=(0, 101),
+            keep_frame=False,
         ),
     )
 
