@@ -104,8 +104,8 @@ class FatigueIntegrator:
         )
 
         self.axes.set_title(self.study.plot_options.title, fontsize=1.5 * font_size)
-        self.axes.set_xlabel(r"Temps (\SI{}{\second})", fontsize=font_size)
-        self.axes.set_ylabel(r"Niveau (\SI{}{\percent})", fontsize=font_size)
+        self.axes.set_xlabel(r"Time (\SI{}{\second})", fontsize=font_size)
+        self.axes.set_ylabel(r"Level (\SI{}{\percent})", fontsize=font_size)
         self.axes.set_xlim(self.study.plot_options.xlim)
         self.axes.set_ylim(self.study.plot_options.ylim)
         if not self.study.plot_options.keep_frame:
