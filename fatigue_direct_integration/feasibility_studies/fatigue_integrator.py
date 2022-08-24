@@ -126,7 +126,7 @@ class FatigueIntegrator:
                 )
             self.axes.legend(
                 self.study.plot_options.legend,
-                loc="upper right",
+                loc="upper right" if supplementary_legend is not None else "lower right",
                 fontsize=font_size,
                 framealpha=0.9,
                 title=self.study.plot_options.legend_title,
