@@ -32,6 +32,7 @@ class CustomColor:
 
 
 class Study(Enum):
+    mr0 = 0.6
     STUDY1_STABILIZER_EFFECT_SHORT_TIME = StudyConfiguration(
         name="STUDY1_STABILIZER_EFFECT",
         repeat=1,
@@ -39,38 +40,38 @@ class Study(Enum):
             FatigueModels.XIA_STABILIZED(
                 FatigueParameters(stabilization_factor=200),
                 integrator=Integrator.RK45,
-                x0=(0, 0.6, 0),
+                x0=(0, mr0, 0),
                 colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
             ),
             FatigueModels.XIA_STABILIZED(
                 FatigueParameters(stabilization_factor=100),
                 integrator=Integrator.RK45,
-                x0=(0, 0.6, 0),
+                x0=(0, mr0, 0),
                 colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
             ),
             FatigueModels.XIA_STABILIZED(
                 FatigueParameters(stabilization_factor=50),
                 integrator=Integrator.RK45,
-                x0=(0, 0.6, 0),
+                x0=(0, mr0, 0),
                 colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
             ),
             FatigueModels.XIA_STABILIZED(
                 FatigueParameters(stabilization_factor=10),
                 integrator=Integrator.RK45,
-                x0=(0, 0.6, 0),
+                x0=(0, mr0, 0),
                 colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
             ),
             FatigueModels.XIA_STABILIZED(
                 FatigueParameters(stabilization_factor=0),
                 integrator=Integrator.RK45,
-                x0=(0, 0.6, 0),
+                x0=(0, mr0, 0),
                 colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
             ),
         ),
         t_end=1,
         fixed_target=0.8,
         target_function=TargetFunctions.TARGET_UP_TO_END,
-        n_points=1000,
+        n_points=100000,
         plot_options=PlotOptions(
             title="",
             legend=("$m_a$", "$m_r$", "$m_f$", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "$TL$"),
