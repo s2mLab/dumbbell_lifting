@@ -13,15 +13,39 @@ from feasibility_studies import (
 )
 
 
-def get_time_at_precision(result, target: float):
-    if target < 1:
-        idx = np.where(np.sum(result.y, axis=0) > target)[0]
-    else:
-        idx = np.where(np.sum(result.y, axis=0) < target)[0]
+def get_time_at_precision(result, precision: float):
+    """
+    Get the time at which the result is within the target precision.
 
+    Parameters
+    ----------
+    result :
+        The result to check.
+    target : float
+        The target precision.
+
+    Returns
+    -------
+    float
+        The time at which the result is within the target precision.
+    """
+    print(precision)
+    # precision = (1 - target) if target < 1 else (target - 1)
+    boolean = np.abs(1 - np.sum(result.y, axis=0)) < precision
+    idx = np.where(boolean)[0]
     if idx.shape[0] == 0:
         return None
-    return result.t[idx[0]]
+    # find the first index where the boolean is True for each value after the first index
+    diff_idx = np.where(np.diff(idx) > 1)[0] + 1
+    if diff_idx.shape[0] == 0:
+        final_idx = idx[0]
+    else:
+        final_idx = result.y.shape[1] - 1 - (np.where(np.flip(boolean) == False)[0][0])
+
+    if final_idx == result.y.shape[1] - 1:
+        return None
+
+    return result.t[final_idx]
 
 
 class CustomColor:
@@ -83,13 +107,13 @@ class Study(Enum):
             ylim=(0, 101),
             keep_frame=False,
         ),
-        common_custom_analyses=(
-            CustomAnalysis("First time with sum at 99.999%", lambda result: get_time_at_precision(result, 0.99999)),
-            CustomAnalysis("First time with sum at 99.9999%", lambda result: get_time_at_precision(result, 0.999999)),
-            CustomAnalysis("First time with sum at 99.99999%", lambda result: get_time_at_precision(result, 0.9999999)),
-            CustomAnalysis("First time with sum at 99.999999%", lambda result: get_time_at_precision(result, 0.99999999)),
-            CustomAnalysis("First time with sum at 99.9999999%", lambda result: get_time_at_precision(result, 0.999999999)),
-        ),
+        # common_custom_analyses=(
+        #     CustomAnalysis("First time with sum at 99.999%", lambda result: get_time_at_precision(result, 0.99999)),
+        #     CustomAnalysis("First time with sum at 99.9999%", lambda result: get_time_at_precision(result, 0.999999)),
+        #     CustomAnalysis("First time with sum at 99.99999%", lambda result: get_time_at_precision(result, 0.9999999)),
+        #     CustomAnalysis("First time with sum at 99.999999%", lambda result: get_time_at_precision(result, 0.99999999)),
+        #     CustomAnalysis("First time with sum at 99.9999999%", lambda result: get_time_at_precision(result, 0.999999999)),
+        # ),
     )
 
     STUDY1_STABILIZER_EFFECT_LONG_TIME = StudyConfiguration(
@@ -132,11 +156,14 @@ class Study(Enum):
         target_function=TargetFunctions.TARGET_UP_TO_END,
         n_points=1000000,
         common_custom_analyses=(
-            CustomAnalysis("First time with sum at 99.999%", lambda result: get_time_at_precision(result, 0.99999)),
-            CustomAnalysis("First time with sum at 99.9999%", lambda result: get_time_at_precision(result, 0.999999)),
-            CustomAnalysis("First time with sum at 99.99999%", lambda result: get_time_at_precision(result, 0.9999999)),
-            CustomAnalysis("First time with sum at 99.999999%", lambda result: get_time_at_precision(result, 0.99999999)),
-            CustomAnalysis("First time with sum at 99.9999999%", lambda result: get_time_at_precision(result, 0.999999999)),
+            CustomAnalysis("First time with sum at 99%", lambda result: get_time_at_precision(result, 1e-2)),
+            CustomAnalysis("First time with sum at 99.9%", lambda result: get_time_at_precision(result, 1e-3)),
+            CustomAnalysis("First time with sum at 99.99%", lambda result: get_time_at_precision(result, 1e-4)),
+            CustomAnalysis("First time with sum at 99.999%", lambda result: get_time_at_precision(result, 1e-5)),
+            CustomAnalysis("First time with sum at 99.9999%", lambda result: get_time_at_precision(result, 1e-6)),
+            CustomAnalysis("First time with sum at 99.99999%", lambda result: get_time_at_precision(result, 1e-7)),
+            CustomAnalysis("First time with sum at 99.999999%", lambda result: get_time_at_precision(result, 1e-8)),
+            CustomAnalysis("First time with sum at 99.9999999%", lambda result: get_time_at_precision(result, 1e-9)),
         ),
     )
 
@@ -192,11 +219,16 @@ class Study(Enum):
                 x0=(0, 1-1e-4, 0),
                 rms_indices=(0, 1, 2),
                 custom_analyses=(
-            CustomAnalysis("First time with sum at 99.999%", lambda result: get_time_at_precision(result, 0.99999)),
-            CustomAnalysis("First time with sum at 99.9999%", lambda result: get_time_at_precision(result, 0.999999)),
-            CustomAnalysis("First time with sum at 99.99999%", lambda result: get_time_at_precision(result, 0.9999999)),
-            CustomAnalysis("First time with sum at 99.999999%", lambda result: get_time_at_precision(result, 0.99999999)),
-            CustomAnalysis("First time with sum at 99.9999999%", lambda result: get_time_at_precision(result, 0.999999999)),
+                    CustomAnalysis("First time with sum at 99.999%",
+                                   lambda result: get_time_at_precision(result, 1e-5)),
+                    CustomAnalysis("First time with sum at 99.9999%",
+                                   lambda result: get_time_at_precision(result, 1e-6)),
+                    CustomAnalysis("First time with sum at 99.99999%",
+                                   lambda result: get_time_at_precision(result, 1e-7)),
+                    CustomAnalysis("First time with sum at 99.999999%",
+                                   lambda result: get_time_at_precision(result, 1e-8)),
+                    CustomAnalysis("First time with sum at 99.9999999%",
+                                   lambda result: get_time_at_precision(result, 1e-9)),
                 )
             ),
             FatigueModels.XIA_STABILIZED(
@@ -205,19 +237,24 @@ class Study(Enum):
                 x0=(0, 1+1e-4, 0),
                 rms_indices=(0, 1, 2),
                 custom_analyses=(
-                    CustomAnalysis("First time with sum at 100.001%", lambda result: get_time_at_precision(result, 1.00001)),
-                    CustomAnalysis("First time with sum at 100.0001%", lambda result: get_time_at_precision(result, 1.000001)),
-                    CustomAnalysis("First time with sum at 100.00001%", lambda result: get_time_at_precision(result, 1.0000001)),
-                    CustomAnalysis("First time with sum at 100.000001%", lambda result: get_time_at_precision(result, 1.00000001)),
-                    CustomAnalysis("First time with sum at 100.0000001%", lambda result: get_time_at_precision(result, 1.000000001)),
+                    CustomAnalysis("First time with sum at 100.001%",
+                                   lambda result: get_time_at_precision(result, 1e-5)),
+                    CustomAnalysis("First time with sum at 100.0001%",
+                                   lambda result: get_time_at_precision(result, 1e-6)),
+                    CustomAnalysis("First time with sum at 100.00001%",
+                                   lambda result: get_time_at_precision(result, 1e-7)),
+                    CustomAnalysis("First time with sum at 100.000001%",
+                                   lambda result: get_time_at_precision(result, 1e-8)),
+                    CustomAnalysis("First time with sum at 100.0000001%",
+                                   lambda result: get_time_at_precision(result, 1e-9)),
                 ),
             ),
-            FatigueModels.XIA(
-                FatigueParameters(),
-                integrator=Integrator.RK45,
-                x0=(0, 1, 0),
-                rms_indices=(0, 1, 2),
-            ),
+            # FatigueModels.XIA(
+            #     FatigueParameters(),
+            #     integrator=Integrator.RK45,
+            #     x0=(0, 1, 0),
+            #     rms_indices=(0, 1, 2),
+            # ),
         ),
         t_end=60,
         fixed_target=0.8,
