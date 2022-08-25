@@ -133,3 +133,5 @@ dmypy.json
 # Do not version the results
 results/
 *.png
+
+*.eps
