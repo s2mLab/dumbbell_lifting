@@ -154,7 +154,7 @@ class Study(Enum):
         t_end=60,
         fixed_target=0.8,
         target_function=TargetFunctions.TARGET_UP_TO_END,
-        n_points=1000000,
+        n_points=100000,
         common_custom_analyses=(
             CustomAnalysis("First time with sum at 99%", lambda result: get_time_at_precision(result, 1e-2)),
             CustomAnalysis("First time with sum at 99.9%", lambda result: get_time_at_precision(result, 1e-3)),
@@ -192,7 +192,9 @@ class Study(Enum):
         n_points=100000,
         common_custom_analyses=(
             CustomAnalysis("Sum of components at the final index", lambda results: np.sum(results.y[:, -1], axis=0)),
-            CustomAnalysis("Fatigue at final node", lambda result: result.y[2, -1]),
+            CustomAnalysis("ma at final node", lambda result: result.y[0, -1]),
+            CustomAnalysis("mr at final node", lambda result: result.y[1, -1]),
+            CustomAnalysis("mf at final node", lambda result: result.y[2, -1]),
         ),
         plot_options=PlotOptions(
             title="",
@@ -249,12 +251,12 @@ class Study(Enum):
                                    lambda result: get_time_at_precision(result, 1e-9)),
                 ),
             ),
-            # FatigueModels.XIA(
-            #     FatigueParameters(),
-            #     integrator=Integrator.RK45,
-            #     x0=(0, 1, 0),
-            #     rms_indices=(0, 1, 2),
-            # ),
+            FatigueModels.XIA(
+                FatigueParameters(),
+                integrator=Integrator.RK45,
+                x0=(0, 1, 0),
+                rms_indices=(0, 1, 2),
+            ),
         ),
         t_end=60,
         fixed_target=0.8,
@@ -262,6 +264,8 @@ class Study(Enum):
         n_points=100000,
         common_custom_analyses=(
             CustomAnalysis("Sum of components at the final index", lambda results: np.sum(results.y[:, -1], axis=0)),
-            CustomAnalysis("Fatigue at final node", lambda result: result.y[2, -1]),
+            CustomAnalysis("ma at final node", lambda result: result.y[0, -1]),
+            CustomAnalysis("mr at final node", lambda result: result.y[1, -1]),
+            CustomAnalysis("mf at final node", lambda result: result.y[2, -1]),
         ),
     )
