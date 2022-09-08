@@ -21,7 +21,7 @@ def get_time_at_precision(result, precision: float):
     ----------
     result :
         The result to check.
-    target : float
+    precision : float
         The target precision.
 
     Returns
@@ -29,8 +29,7 @@ def get_time_at_precision(result, precision: float):
     float
         The time at which the result is within the target precision.
     """
-    print(precision)
-    # precision = (1 - target) if target < 1 else (target - 1)
+
     boolean = np.abs(1 - np.sum(result.y, axis=0)) < precision
     idx = np.where(boolean)[0]
     if idx.shape[0] == 0:
@@ -40,7 +39,7 @@ def get_time_at_precision(result, precision: float):
     if diff_idx.shape[0] == 0:
         final_idx = idx[0]
     else:
-        final_idx = result.y.shape[1] - 1 - (np.where(np.flip(boolean) == False)[0][0])
+        final_idx = result.y.shape[1] - 1 - (not np.where(np.flip(boolean))[0][0])
 
     if final_idx == result.y.shape[1] - 1:
         return None
@@ -55,40 +54,42 @@ class CustomColor:
     Gray = "tab:gray"
 
 
+mr_initial_value = 0.6
+
+
 class Study(Enum):
-    mr0 = 0.6
     STUDY1_STABILIZER_EFFECT_SHORT_TIME = StudyConfiguration(
-        name="STUDY1_STABILIZER_EFFECT",
+        name="STUDY1_STABILIZER_EFFECT_SHORT",
         repeat=1,
         fatigue_models=(
             FatigueModels.XIA_STABILIZED(
                 FatigueParameters(stabilization_factor=200),
                 integrator=Integrator.RK45,
-                x0=(0, mr0, 0),
+                x0=(0, mr_initial_value, 0),
                 colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
             ),
             FatigueModels.XIA_STABILIZED(
                 FatigueParameters(stabilization_factor=100),
                 integrator=Integrator.RK45,
-                x0=(0, mr0, 0),
+                x0=(0, mr_initial_value, 0),
                 colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
             ),
             FatigueModels.XIA_STABILIZED(
                 FatigueParameters(stabilization_factor=50),
                 integrator=Integrator.RK45,
-                x0=(0, mr0, 0),
+                x0=(0, mr_initial_value, 0),
                 colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
             ),
             FatigueModels.XIA_STABILIZED(
                 FatigueParameters(stabilization_factor=10),
                 integrator=Integrator.RK45,
-                x0=(0, mr0, 0),
+                x0=(0, mr_initial_value, 0),
                 colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
             ),
             FatigueModels.XIA_STABILIZED(
                 FatigueParameters(stabilization_factor=0),
                 integrator=Integrator.RK45,
-                x0=(0, mr0, 0),
+                x0=(0, mr_initial_value, 0),
                 colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
             ),
         ),
@@ -107,47 +108,40 @@ class Study(Enum):
             ylim=(0, 101),
             keep_frame=False,
         ),
-        # common_custom_analyses=(
-        #     CustomAnalysis("First time with sum at 99.999%", lambda result: get_time_at_precision(result, 0.99999)),
-        #     CustomAnalysis("First time with sum at 99.9999%", lambda result: get_time_at_precision(result, 0.999999)),
-        #     CustomAnalysis("First time with sum at 99.99999%", lambda result: get_time_at_precision(result, 0.9999999)),
-        #     CustomAnalysis("First time with sum at 99.999999%", lambda result: get_time_at_precision(result, 0.99999999)),
-        #     CustomAnalysis("First time with sum at 99.9999999%", lambda result: get_time_at_precision(result, 0.999999999)),
-        # ),
     )
 
     STUDY1_STABILIZER_EFFECT_LONG_TIME = StudyConfiguration(
-        name="STUDY1_STABILIZER_EFFECT",
+        name="STUDY1_STABILIZER_EFFECT_LONG",
         repeat=1,
         fatigue_models=(
             FatigueModels.XIA_STABILIZED(
                 FatigueParameters(stabilization_factor=200),
                 integrator=Integrator.RK45,
-                x0=(0, mr0, 0),
+                x0=(0, mr_initial_value, 0),
                 colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
             ),
             FatigueModels.XIA_STABILIZED(
                 FatigueParameters(stabilization_factor=100),
                 integrator=Integrator.RK45,
-                x0=(0, mr0, 0),
+                x0=(0, mr_initial_value, 0),
                 colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
             ),
             FatigueModels.XIA_STABILIZED(
                 FatigueParameters(stabilization_factor=50),
                 integrator=Integrator.RK45,
-                x0=(0, mr0, 0),
+                x0=(0, mr_initial_value, 0),
                 colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
             ),
             FatigueModels.XIA_STABILIZED(
                 FatigueParameters(stabilization_factor=10),
                 integrator=Integrator.RK45,
-                x0=(0, mr0, 0),
+                x0=(0, mr_initial_value, 0),
                 colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
             ),
             FatigueModels.XIA_STABILIZED(
                 FatigueParameters(stabilization_factor=0),
                 integrator=Integrator.RK45,
-                x0=(0, mr0, 0),
+                x0=(0, mr_initial_value, 0),
                 colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
             ),
         ),
@@ -201,8 +195,6 @@ class Study(Enum):
             legend=(
             "$m_a$", "$m_r$", "$m_f$", "$m_a+m_r+m_f$", "_", "_", "_", "_", "$TL$", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_",
             "_", "$TL$"),
-            # supplementary_legend=("$S = 200$", "$S = 100$", "$S = 50$", "$S = 10$", "$S = 0$"),
-            # supplementary_legend_title="$m_a + m_r + m_f$",
             options=({"linestyle": "-"}, {"linestyle": "--"}),
             save_name="STUDY2_STABILIZER_EFFECT_SAME_START",
             xlim=(0, 60.1),
