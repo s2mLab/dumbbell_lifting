@@ -138,14 +138,10 @@ class FatigueIntegrator:
         if maximized:
             plt.get_current_fig_manager().window.showMaximized()
 
-        if self.study.plot_options.save_path:
-            plt.savefig(f"{self.prepare_and_get_results_dir()}/{self.study.plot_options.save_path}", dpi=100)
-            # remove the extention of plot_options.save_path[i]
-            self.study.plot_options.save_path = self.study.plot_options.save_path.split(".")[0]
-            # remove the extention of save_path to get the name of the file and save it as a pdf
-            plt.savefig(f"{self.prepare_and_get_results_dir()}/{self.study.plot_options.save_path}.pdf", format="pdf")
-            # and in eps format
-            plt.savefig(f"{self.prepare_and_get_results_dir()}/{self.study.plot_options.save_path}.eps", format="eps")
+        if self.study.plot_options.save_name:
+            plt.savefig(f"{self.prepare_and_get_results_dir()}/{self.study.plot_options.save_name}.png", dpi=100)
+            plt.savefig(f"{self.prepare_and_get_results_dir()}/{self.study.plot_options.save_name}.pdf", format="pdf")
+            plt.savefig(f"{self.prepare_and_get_results_dir()}/{self.study.plot_options.save_name}.eps", format="eps")
 
         plt.show()
 

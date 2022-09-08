@@ -10,7 +10,7 @@ class PlotOptions:
         supplementary_legend: tuple[str, ...] = None,
         supplementary_legend_title: str = None,
         options: tuple[dict, ...] = None,
-        save_path: str = None,
+        save_name: str = None,
         xlim: tuple[float, float] = None,
         ylim: tuple[float, float] = None,
         keep_frame: bool = True,
@@ -19,12 +19,13 @@ class PlotOptions:
         self.legend = legend
         self.legend_title = legend_title
         self.options = options
-        self.save_path = save_path
+        self.save_name = save_name
         self.supplementary_legend = supplementary_legend
         self.supplementary_legend_title = supplementary_legend_title
         self.xlim = xlim
         self.ylim = ylim
         self.keep_frame = keep_frame
+
 
 class CustomAnalysis:
     def __init__(self, name, fun):
