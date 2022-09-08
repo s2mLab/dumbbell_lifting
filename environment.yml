@@ -4,8 +4,8 @@ channels:
 - conda-forge
 - default
 dependencies:
-- python >=3.10
-- biorbd >=1.8.8
-- bioptim
+- python ==3.10
+- biorbd ==1.8.8
+- bioptim ==2.2.2
 - plotly ==5.10.0
-- kaleido
+- python-kaleido ==0.2.1
