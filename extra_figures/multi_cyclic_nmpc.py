@@ -8,7 +8,7 @@ mlw = 3
 
 fig.add_trace(
     go.Bar(
-        y=[f"<b>{final_sol_str}</b>", "<b>OCP 1</b>", "<b>OCP 2</b>", "<b>OCP 3</b>"],
+        y=[f"<b>{final_sol_str}</b>", "<b>OCP 2</b>", "<b>OCP 1</b>", "<b>OCP 0</b>"],
         x=[0.5, 0.5, 0.5, 0.5],
         orientation="h",
         marker_color="rgba(0,0,0,0)",
@@ -19,7 +19,7 @@ fig.add_trace(
 
 fig.add_trace(
     go.Bar(
-        y=[f"<b>{final_sol_str}</b>", "<b>OCP 1</b>"],
+        y=[f"<b>{final_sol_str}</b>", "<b>OCP 0</b>"],
         x=[1, 1],
         orientation="h",
         marker_pattern_shape="+",
@@ -31,7 +31,7 @@ fig.add_trace(
 )
 fig.add_trace(
     go.Bar(
-        y=["<b>OCP 1</b>"],
+        y=["<b>OCP 0</b>"],
         x=[1],
         orientation="h",
         marker_pattern_shape="+",
@@ -43,7 +43,7 @@ fig.add_trace(
 )
 fig.add_trace(
     go.Bar(
-        y=["<b>OCP 1</b>"],
+        y=["<b>OCP 0</b>"],
         x=[1],
         orientation="h",
         marker_pattern_shape="+",
@@ -56,7 +56,7 @@ fig.add_trace(
 
 fig.add_trace(
     go.Bar(
-        y=["<b>OCP 2</b>"],
+        y=["<b>OCP 1</b>"],
         x=[1],
         orientation="h",
         marker_color="rgba(255, 0, 0, 0)",
@@ -65,7 +65,7 @@ fig.add_trace(
 )
 fig.add_trace(
     go.Bar(
-        y=[f"<b>{final_sol_str}</b>", "<b>OCP 2</b>"],
+        y=[f"<b>{final_sol_str}</b>", "<b>OCP 1</b>"],
         x=[1, 1],
         orientation="h",
         marker_pattern_shape=".",
@@ -77,7 +77,7 @@ fig.add_trace(
 )
 fig.add_trace(
     go.Bar(
-        y=["<b>OCP 2</b>"],
+        y=["<b>OCP 1</b>"],
         x=[1],
         orientation="h",
         marker_pattern_shape=".",
@@ -89,7 +89,7 @@ fig.add_trace(
 )
 fig.add_trace(
     go.Bar(
-        y=["<b>OCP 2</b>"],
+        y=["<b>OCP 1</b>"],
         x=[1],
         orientation="h",
         marker_pattern_shape=".",
@@ -102,7 +102,7 @@ fig.add_trace(
 
 fig.add_trace(
     go.Bar(
-        y=["<b>OCP 3</b>"],
+        y=["<b>OCP 2</b>"],
         x=[2],
         orientation="h",
         marker_color="rgba(255, 0, 0, 0)",
@@ -111,7 +111,7 @@ fig.add_trace(
 )
 fig.add_trace(
     go.Bar(
-        y=[f"<b>{final_sol_str}</b>", "<b>OCP 3</b>"],
+        y=[f"<b>{final_sol_str}</b>", "<b>OCP 2</b>"],
         x=[1, 1],
         orientation="h",
         marker_pattern_shape="x",
@@ -123,7 +123,7 @@ fig.add_trace(
 )
 fig.add_trace(
     go.Bar(
-        y=["<b>OCP 3</b>"],
+        y=["<b>OCP 2</b>"],
         x=[1],
         orientation="h",
         marker_pattern_shape="x",
@@ -135,7 +135,7 @@ fig.add_trace(
 )
 fig.add_trace(
     go.Bar(
-        y=["<b>OCP 3</b>"],
+        y=["<b>OCP 2</b>"],
         x=[1],
         orientation="h",
         marker_pattern_shape="x",
