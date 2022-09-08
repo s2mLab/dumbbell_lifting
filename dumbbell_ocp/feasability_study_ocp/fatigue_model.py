@@ -1,16 +1,18 @@
-from bioptim import MichaudTauFatigue, MichaudFatigue, EffortPerception as EP, TauEffortPerception
+from bioptim import XiaTauFatigue, XiaFatigueStabilized
 from bioptim.dynamics.fatigue.muscle_fatigue import MuscleFatigue
 
 from .enums import FatigableStructure
 
 
 class FatigueParameters:
+    # according to https://doi.org/10.1016/j.jbiomech.2018.06.005
+    # Elbow Parameters
     def __init__(
         self,
-        LD: float = 100,
-        LR: float = 100,
-        F: float = 0.005,
-        R: float = 0.005,
+        LD: float = 10,
+        LR: float = 10,
+        F: float = 0.00912,
+        R: float = 0.00094,
         scaling: float = 1,
         stabilization_factor: float = 10,
         effort_factor: float = 0.0075,
@@ -36,78 +38,43 @@ class FatigueModel:
         self.model = model
 
 
-class Michaud(FatigueModel):
+class Xia(FatigueModel):
     def __init__(self, fatigable_structure: FatigableStructure, fatigue_params: FatigueParameters):
         if fatigable_structure == FatigableStructure.JOINTS:
-            model = MichaudTauFatigue(
-                MichaudFatigue(
+            model = XiaTauFatigue(
+                XiaFatigueStabilized(
                     LD=fatigue_params.LD,
                     LR=fatigue_params.LR,
                     F=fatigue_params.F,
                     R=fatigue_params.R,
-                    effort_threshold=fatigue_params.effort_threshold,
                     stabilization_factor=fatigue_params.stabilization_factor,
-                    effort_factor=fatigue_params.effort_factor,
                     scaling=-fatigue_params.scaling,
                 ),
-                MichaudFatigue(
+                XiaFatigueStabilized(
                     LD=fatigue_params.LD,
                     LR=fatigue_params.LR,
                     F=fatigue_params.F,
                     R=fatigue_params.R,
-                    effort_threshold=fatigue_params.effort_threshold,
                     stabilization_factor=fatigue_params.stabilization_factor,
-                    effort_factor=fatigue_params.effort_factor,
                     scaling=fatigue_params.scaling,
                 ),
                 split_controls=fatigue_params.split_controls,
             )
         elif fatigable_structure == FatigableStructure.MUSCLES:
-            model = MichaudFatigue(
+            model = XiaFatigueStabilized(
                 LD=fatigue_params.LD,
                 LR=fatigue_params.LR,
                 F=fatigue_params.F,
                 R=fatigue_params.R,
-                effort_threshold=fatigue_params.effort_threshold,
                 stabilization_factor=fatigue_params.stabilization_factor,
-                effort_factor=fatigue_params.effort_factor,
                 scaling=fatigue_params.scaling,
             )
         else:
             raise NotImplementedError("Fatigue structure model not implemented")
 
-        super(Michaud, self).__init__(model)
-
-
-class EffortPerception(FatigueModel):
-    def __init__(self, fatigable_structure: FatigableStructure, fatigue_params: FatigueParameters):
-        if fatigable_structure == FatigableStructure.JOINTS:
-            model = TauEffortPerception(
-                EP(
-                    effort_threshold=fatigue_params.effort_threshold,
-                    effort_factor=fatigue_params.effort_factor,
-                    scaling=-fatigue_params.scaling,
-                ),
-                EP(
-                    effort_threshold=fatigue_params.effort_threshold,
-                    effort_factor=fatigue_params.effort_factor,
-                    scaling=fatigue_params.scaling,
-                ),
-                split_controls=fatigue_params.split_controls,
-            )
-        elif fatigable_structure == FatigableStructure.MUSCLES:
-            model = EP(
-                effort_threshold=fatigue_params.effort_threshold,
-                effort_factor=fatigue_params.effort_factor,
-                scaling=fatigue_params.scaling,
-            )
-        else:
-            raise NotImplementedError("Fatigue structure model not implemented")
-
-        super(EffortPerception, self).__init__(model)
+        super(Xia, self).__init__(model)
 
 
 class FatigueModels:
     NONE = None
-    MICHAUD = Michaud
-    EFFORT_PERCEPTION = EffortPerception
+    XIA_STABILIZED = Xia

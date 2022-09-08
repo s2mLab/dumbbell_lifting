@@ -6,8 +6,6 @@ from bioptim import (
     ObjectiveList,
     ConstraintList,
     ConstraintFcn,
-    Node,
-    Axis,
     QAndQDotBounds,
     FatigueBounds,
     Bounds,
@@ -19,6 +17,7 @@ from bioptim import (
 )
 from bioptim.dynamics.ode_solver import OdeSolverBase
 import biorbd_casadi as biorbd
+import numpy as np
 
 from .enums import DynamicsFcn
 from .fatigue_model import FatigueModel
@@ -30,6 +29,7 @@ class OcpConfiguration:
         name: str,
         model_path: str,
         n_shoot: int,
+        n_round_trips: int,
         final_time: float,
         x0: tuple[float, ...],
         tau_limits: tuple[float, float],
@@ -46,8 +46,9 @@ class OcpConfiguration:
         self.name = name
         self.save_name = name.replace("$", "")
         self.save_name = self.save_name.replace("\\", "")
-        self.n_shoot = n_shoot
-        self.final_time = final_time
+        self.n_round_trips = n_round_trips
+        self.n_shoot = (n_shoot - 1) * self.n_round_trips + 1
+        self.final_time = final_time * self.n_round_trips
         self.use_sx = use_sx
         self.ode_solver = ode_solver
         self.solver: Solver = solver
@@ -64,14 +65,18 @@ class OcpConfiguration:
         self.objectives = objectives
 
         # Initialize constraints of the problem
+        # The main goal of the OCP is to have the forearm doing X round trips from 15 and 150 degrees
+        lower_target = 15 * np.pi / 180
+        upper_target = 150 * np.pi / 180
         self.constraints = constraints
-        self.constraints.add(
-            ConstraintFcn.SUPERIMPOSE_MARKERS,
-            first_marker="target",
-            second_marker="COM_hand",
-            node=Node.END,
-            axes=[Axis.X, Axis.Y],
-        )
+        for i in range(self.n_round_trips * 2 + 1):  # +1 for finishing down
+            self.constraints.add(
+                ConstraintFcn.TRACK_STATE,
+                index=1,
+                target=lower_target if i % 2 == 0 else upper_target,
+                key="q",
+                node=self.n_shoot * i // (self.n_round_trips * 2),
+            )
 
         # Initializing dynamics
         self.fatigue = FatigueList()

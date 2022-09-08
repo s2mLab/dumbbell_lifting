@@ -21,10 +21,11 @@ from feasability_study_ocp import (
 class StudySetup:
     def __init__(
         self,
-        n_shoot: int = 50,
+        n_shoot: int = 51,
         final_time: float = 1,
-        x0: tuple[float, ...] = (0.07, 1.4, 0, 0),
-        tau_limits_no_muscles: tuple[float, float] = (-10, 10),
+        n_round_trips: int = 3,
+        x0: tuple[float, ...] = (0.07, 15 * np.pi / 180, 0, 0),
+        tau_limits_no_muscles: tuple[float, float] = (-50, 50),
         tau_limits_with_muscles: tuple[float, float] = (-1, 1),
         weight_fatigue: float = 1_000,
         split_controls: bool = False,
@@ -34,6 +35,7 @@ class StudySetup:
         n_thread: int = 8,
     ):
         self.n_shoot = n_shoot
+        self.n_round_trips = n_round_trips
         self.final_time = final_time
         self.x0 = x0
         self.tau_limits_no_muscles = tau_limits_no_muscles
@@ -62,10 +64,14 @@ class StudyInternal:
         objectives = ObjectiveList()
         objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, key="tau", weight=1)
 
+        # Keep arm pointing down as much as possible
+        objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="q", index=0, weight=10_000)
+
         return OcpConfiguration(
             name=r"$\condTauNf$",
             model_path="models/arm26.bioMod",
             n_shoot=study_setup.n_shoot,
+            n_round_trips=study_setup.n_round_trips,
             final_time=study_setup.final_time,
             x0=study_setup.x0,
             tau_limits=study_setup.tau_limits_no_muscles,
@@ -87,10 +93,14 @@ class StudyInternal:
         objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, key="tau", weight=100)
         objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, key="muscles", weight=1)
 
+        # Keep arm pointing down as much as possible
+        objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="q", index=0, weight=10_000)
+
         return OcpConfiguration(
             name=r"$\condAlphaNf$",
             model_path="models/arm26.bioMod",
             n_shoot=study_setup.n_shoot,
+            n_round_trips=study_setup.n_round_trips,
             final_time=study_setup.final_time,
             x0=study_setup.x0,
             tau_limits=study_setup.tau_limits_with_muscles,
@@ -105,8 +115,8 @@ class StudyInternal:
         )
 
     @staticmethod
-    def torque_driven_michaud(study_setup: StudySetup):
-        fatigue_model = FatigueModels.MICHAUD(
+    def torque_driven_xia(study_setup: StudySetup):
+        fatigue_model = FatigueModels.XIA_STABILIZED(
             FatigableStructure.JOINTS,
             FatigueParameters(scaling=study_setup.tau_limits_no_muscles[1], split_controls=study_setup.split_controls),
         )
@@ -115,13 +125,15 @@ class StudyInternal:
         objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, key="tau", weight=1)
         objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="tau_minus_mf", weight=study_setup.weight_fatigue)
         objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="tau_plus_mf", weight=study_setup.weight_fatigue)
-        objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="tau_minus_mf_xia", weight=study_setup.weight_fatigue)
-        objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="tau_plus_mf_xia", weight=study_setup.weight_fatigue)
+
+        # Keep arm pointing down as much as possible
+        objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="q", index=0, weight=10_000)
 
         return OcpConfiguration(
             name=r"$\condTaupmQcc$" if study_setup.split_controls else r"$\condTaunsQcc$",
             model_path="models/arm26.bioMod",
             n_shoot=study_setup.n_shoot,
+            n_round_trips=study_setup.n_round_trips,
             final_time=study_setup.final_time,
             x0=study_setup.x0,
             tau_limits=study_setup.tau_limits_no_muscles,
@@ -136,74 +148,22 @@ class StudyInternal:
         )
 
     @staticmethod
-    def muscle_driven_michaud(study_setup: StudySetup):
-        fatigue_model = FatigueModels.MICHAUD(FatigableStructure.MUSCLES, FatigueParameters())
+    def muscle_driven_xia(study_setup: StudySetup):
+        fatigue_model = FatigueModels.XIA_STABILIZED(FatigableStructure.MUSCLES, FatigueParameters())
 
         objectives = ObjectiveList()
         objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, key="tau", weight=100)
         objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, key="muscles", weight=1)
         objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="muscles_mf", weight=study_setup.weight_fatigue)
-        objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="muscles_mf_xia", weight=study_setup.weight_fatigue)
+
+        # Keep arm pointing down as much as possible
+        objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="q", index=0, weight=10_000)
 
         return OcpConfiguration(
             name=r"$\condAlphaQcc$",
             model_path="models/arm26.bioMod",
             n_shoot=study_setup.n_shoot,
-            final_time=study_setup.final_time,
-            x0=study_setup.x0,
-            tau_limits=study_setup.tau_limits_with_muscles,
-            dynamics=DynamicsFcn.MUSCLE_DRIVEN,
-            fatigue_model=fatigue_model,
-            objectives=objectives,
-            constraints=ConstraintList(),
-            use_sx=study_setup.use_sx,
-            ode_solver=study_setup.ode_solver,
-            solver=study_setup.solver,
-            n_threads=study_setup.n_thread,
-        )
-
-    @staticmethod
-    def torque_driven_effort_perception(study_setup: StudySetup):
-        fatigue_model = FatigueModels.EFFORT_PERCEPTION(
-            FatigableStructure.JOINTS,
-            FatigueParameters(scaling=study_setup.tau_limits_no_muscles[1], split_controls=study_setup.split_controls),
-        )
-
-        objectives = ObjectiveList()
-        objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, key="tau", weight=1)
-        objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_FATIGUE, key="tau_minus", weight=study_setup.weight_fatigue)
-        objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_FATIGUE, key="tau_plus", weight=study_setup.weight_fatigue)
-
-        return OcpConfiguration(
-            name=r"$\condTaupmPe$" if study_setup.split_controls else r"$\condTaunsPe$",
-            model_path="models/arm26.bioMod",
-            n_shoot=study_setup.n_shoot,
-            final_time=study_setup.final_time,
-            x0=study_setup.x0,
-            tau_limits=study_setup.tau_limits_no_muscles,
-            dynamics=DynamicsFcn.TORQUE_DRIVEN,
-            fatigue_model=fatigue_model,
-            objectives=objectives,
-            constraints=ConstraintList(),
-            use_sx=study_setup.use_sx,
-            ode_solver=study_setup.ode_solver,
-            solver=study_setup.solver,
-            n_threads=study_setup.n_thread,
-        )
-
-    @staticmethod
-    def muscle_driven_effort_perception(study_setup: StudySetup):
-        fatigue_model = FatigueModels.EFFORT_PERCEPTION(FatigableStructure.MUSCLES, FatigueParameters())
-
-        objectives = ObjectiveList()
-        objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, key="tau", weight=100)
-        objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, key="muscles", weight=1)
-        objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_FATIGUE, key="muscles", weight=study_setup.weight_fatigue)
-
-        return OcpConfiguration(
-            name=r"$\condAlphaPe$",
-            model_path="models/arm26.bioMod",
-            n_shoot=study_setup.n_shoot,
+            n_round_trips=study_setup.n_round_trips,
             final_time=study_setup.final_time,
             x0=study_setup.x0,
             tau_limits=study_setup.tau_limits_with_muscles,
@@ -234,7 +194,7 @@ class StudyConfiguration:
 
 class Conditions(Enum):
     DEBUG_FAST = StudyConfiguration(
-        studies=(StudyInternal.torque_driven_michaud(StudySetup(split_controls=False)),),
+        studies=(StudyInternal.torque_driven_xia(StudySetup(split_controls=False)),),
         rmse_index=None,
         plot_options=PlotOptions(
             title="%s pour les conditions $C/\\tau\\varnothing$  et $C/\\alpha\\varnothing$",
@@ -248,12 +208,9 @@ class Conditions(Enum):
         studies=(
             StudyInternal.torque_driven_no_fatigue(StudySetup()),
             StudyInternal.muscles_driven_no_fatigue(StudySetup()),
-            StudyInternal.torque_driven_michaud(StudySetup(split_controls=True)),
-            StudyInternal.torque_driven_michaud(StudySetup(split_controls=False)),
-            StudyInternal.muscle_driven_michaud(StudySetup()),
-            StudyInternal.torque_driven_effort_perception(StudySetup(split_controls=True)),
-            StudyInternal.torque_driven_effort_perception(StudySetup(split_controls=False)),
-            StudyInternal.muscle_driven_effort_perception(StudySetup()),
+            StudyInternal.torque_driven_xia(StudySetup(split_controls=True)),
+            StudyInternal.torque_driven_xia(StudySetup(split_controls=False)),
+            StudyInternal.muscle_driven_xia(StudySetup()),
         ),
         rmse_index=None,
         plot_options=PlotOptions(
@@ -265,11 +222,6 @@ class Conditions(Enum):
                 {"linestyle": "-"},
                 {"linestyle": "--"},
                 {"linestyle": "-"},
-                {"linestyle": "--"},
-                {"linestyle": "-"},
-                {"linestyle": "--"},
-                {"linestyle": "-"},
-                {"linestyle": "--"},
             ),
             to_degrees=True,
         ),
@@ -277,24 +229,16 @@ class Conditions(Enum):
 
     STUDY1 = StudyConfiguration(
         studies=(
-            StudyInternal.torque_driven_no_fatigue(StudySetup()),
-            StudyInternal.torque_driven_michaud(StudySetup(split_controls=True)),
-            StudyInternal.torque_driven_effort_perception(StudySetup(split_controls=True)),
-            StudyInternal.torque_driven_michaud(StudySetup(split_controls=False)),
-            StudyInternal.torque_driven_effort_perception(StudySetup(split_controls=False)),
-            StudyInternal.muscles_driven_no_fatigue(StudySetup()),
-            StudyInternal.muscle_driven_michaud(StudySetup()),
-            StudyInternal.muscle_driven_effort_perception(StudySetup()),
+            # StudyInternal.torque_driven_no_fatigue(StudySetup()),
+            # StudyInternal.torque_driven_xia(StudySetup(split_controls=True)),
+            # StudyInternal.torque_driven_xia(StudySetup(split_controls=False)),
+            # StudyInternal.muscles_driven_no_fatigue(StudySetup()),
+            StudyInternal.muscle_driven_xia(StudySetup()),
         ),
-        rmse_index=(0, 0, 0, 0, 0, 5, 5, 5),
+        rmse_index=(0, 0, 0, 5, 5),
         plot_options=PlotOptions(
-            # title="Degré de liberté %s en fonction du temps pour toutes les conditions",
             title="",
             legend_indices=(
-                True,
-                True,
-                True,
-                True,
                 True,
                 True,
                 True,
@@ -304,12 +248,9 @@ class Conditions(Enum):
             options=(
                 {"linestyle": "-", "color": mcolors.CSS4_COLORS["black"], "linewidth": 5},
                 {"linestyle": "-", "color": mcolors.CSS4_COLORS["lightcoral"]},
-                {"linestyle": "-", "color": mcolors.CSS4_COLORS["cornflowerblue"]},
                 {"linestyle": "-", "color": mcolors.CSS4_COLORS["red"]},
-                {"linestyle": "-", "color": mcolors.CSS4_COLORS["blue"]},
                 {"linestyle": "--", "color": mcolors.CSS4_COLORS["black"]},
                 {"linestyle": "--", "color": mcolors.CSS4_COLORS["red"]},
-                {"linestyle": "--", "color": mcolors.CSS4_COLORS["blue"]},
             ),
             to_degrees=True,
             maximize=False,
