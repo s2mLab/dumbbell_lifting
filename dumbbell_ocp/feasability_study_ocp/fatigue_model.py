@@ -18,6 +18,7 @@ class FatigueParameters:
         effort_factor: float = 0.0075,
         effort_threshold: float = 0.2,
         split_controls: bool = True,
+        apply_on_joint: bool = False,
     ):
         self.LD = LD
         self.LR = LR
@@ -28,6 +29,7 @@ class FatigueParameters:
         self.stabilization_factor = stabilization_factor
         self.effort_threshold = effort_threshold
         self.split_controls = split_controls
+        self.apply_on_joint = apply_on_joint
 
 
 class FatigueModel:
@@ -49,7 +51,7 @@ class Xia(FatigueModel):
                     R=fatigue_params.R,
                     stabilization_factor=fatigue_params.stabilization_factor,
                     scaling=-fatigue_params.scaling,
-                    apply_to_joint_dynamics=False,
+                    apply_to_joint_dynamics=fatigue_params.apply_on_joint,
                 ),
                 XiaFatigueStabilized(
                     LD=fatigue_params.LD,
@@ -58,7 +60,7 @@ class Xia(FatigueModel):
                     R=fatigue_params.R,
                     stabilization_factor=fatigue_params.stabilization_factor,
                     scaling=fatigue_params.scaling,
-                    apply_to_joint_dynamics=False,
+                    apply_to_joint_dynamics=fatigue_params.apply_on_joint,
                 ),
                 split_controls=fatigue_params.split_controls,
             )
@@ -70,7 +72,7 @@ class Xia(FatigueModel):
                 R=fatigue_params.R,
                 stabilization_factor=fatigue_params.stabilization_factor,
                 scaling=fatigue_params.scaling,
-                apply_to_joint_dynamics=True,
+                apply_to_joint_dynamics=fatigue_params.apply_on_joint,
             )
         else:
             raise NotImplementedError("Fatigue structure model not implemented")

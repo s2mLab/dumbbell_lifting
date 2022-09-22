@@ -118,7 +118,11 @@ class StudyInternal:
     def torque_driven_xia(study_setup: StudySetup):
         fatigue_model = FatigueModels.XIA_STABILIZED(
             FatigableStructure.JOINTS,
-            FatigueParameters(scaling=study_setup.tau_limits_no_muscles[1], split_controls=study_setup.split_controls),
+            FatigueParameters(
+                scaling=study_setup.tau_limits_no_muscles[1],
+                split_controls=study_setup.split_controls,
+                apply_on_joint=False,
+            ),
         )
 
         objectives = ObjectiveList()
@@ -149,7 +153,9 @@ class StudyInternal:
 
     @staticmethod
     def muscle_driven_xia(study_setup: StudySetup):
-        fatigue_model = FatigueModels.XIA_STABILIZED(FatigableStructure.MUSCLES, FatigueParameters())
+        fatigue_model = FatigueModels.XIA_STABILIZED(
+            FatigableStructure.MUSCLES, FatigueParameters(apply_on_joint=False)
+        )
 
         objectives = ObjectiveList()
         objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, key="tau", weight=100)
