@@ -83,12 +83,20 @@ class OcpConfiguration:
         if dynamics == DynamicsFcn.TORQUE_DRIVEN:
             if fatigue_model is not None:
                 for _ in range(self.n_tau):
-                    self.fatigue.add(fatigue_model.model)
+                    self.fatigue.add(
+                        fatigue_model.model,
+                        state_only=fatigue_model.model.state_only,
+                        apply_to_joint_dynamics=fatigue_model.model.apply_to_joint_dynamics,
+                    )
             self.dynamics = Dynamics(dynamics.value, expand=False, fatigue=self.fatigue)
         elif dynamics == DynamicsFcn.MUSCLE_DRIVEN:
             if fatigue_model is not None:
                 for _ in range(self.n_muscles):
-                    self.fatigue.add(fatigue_model.model)
+                    self.fatigue.add(
+                        fatigue_model.model,
+                        state_only=fatigue_model.model.state_only,
+                        apply_to_joint_dynamics=fatigue_model.model.apply_to_joint_dynamics,
+                    )
             self.dynamics = Dynamics(dynamics.value, expand=False, fatigue=self.fatigue, with_torque=True)
         else:
             raise NotImplementedError("Dynamics not implemented yet")

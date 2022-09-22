@@ -99,10 +99,41 @@ class Study(Enum):
         n_points=100000,
         plot_options=PlotOptions(
             title="",
-            legend=("$m_a$", "$m_r$", "$m_f$", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "$TL$"),
+            legend=(
+                "$m_a$",
+                "$m_r$",
+                "$m_f$",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "$TL$",
+            ),
             supplementary_legend=("$S = 200$", "$S = 100$", "$S = 50$", "$S = 10$", "$S = 0$"),
             supplementary_legend_title="$m_a + m_r + m_f$",
-            options=({"linestyle": "-"}, {"linestyle": "--"}, {"linestyle": "-."}, {"linestyle": ":"}, {"linestyle": "-", "linewidth": 3,}),
+            options=(
+                {"linestyle": "-"},
+                {"linestyle": "--"},
+                {"linestyle": "-."},
+                {"linestyle": ":"},
+                {
+                    "linestyle": "-",
+                    "linewidth": 3,
+                },
+            ),
             save_name="STUDY1_STABILIZER_EFFECT",
             xlim=(0, 1.01),
             ylim=(0, 101),
@@ -193,8 +224,28 @@ class Study(Enum):
         plot_options=PlotOptions(
             title="",
             legend=(
-            "$m_a$", "$m_r$", "$m_f$", "$m_a+m_r+m_f$", "_", "_", "_", "_", "$TL$", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_",
-            "_", "$TL$"),
+                "$m_a$",
+                "$m_r$",
+                "$m_f$",
+                "$m_a+m_r+m_f$",
+                "_",
+                "_",
+                "_",
+                "_",
+                "$TL$",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "$TL$",
+            ),
             options=({"linestyle": "-"}, {"linestyle": "--"}),
             save_name="STUDY2_STABILIZER_EFFECT_SAME_START",
             xlim=(0, 60.1),
@@ -210,37 +261,47 @@ class Study(Enum):
             FatigueModels.XIA_STABILIZED(
                 FatigueParameters(stabilization_factor=10),
                 integrator=Integrator.RK45,
-                x0=(0, 1-1e-4, 0),
+                x0=(0, 1 - 1e-4, 0),
                 rms_indices=(0, 1, 2),
                 custom_analyses=(
-                    CustomAnalysis("First time with sum at 99.999%",
-                                   lambda result: get_time_at_precision(result, 1e-5)),
-                    CustomAnalysis("First time with sum at 99.9999%",
-                                   lambda result: get_time_at_precision(result, 1e-6)),
-                    CustomAnalysis("First time with sum at 99.99999%",
-                                   lambda result: get_time_at_precision(result, 1e-7)),
-                    CustomAnalysis("First time with sum at 99.999999%",
-                                   lambda result: get_time_at_precision(result, 1e-8)),
-                    CustomAnalysis("First time with sum at 99.9999999%",
-                                   lambda result: get_time_at_precision(result, 1e-9)),
-                )
+                    CustomAnalysis(
+                        "First time with sum at 99.999%", lambda result: get_time_at_precision(result, 1e-5)
+                    ),
+                    CustomAnalysis(
+                        "First time with sum at 99.9999%", lambda result: get_time_at_precision(result, 1e-6)
+                    ),
+                    CustomAnalysis(
+                        "First time with sum at 99.99999%", lambda result: get_time_at_precision(result, 1e-7)
+                    ),
+                    CustomAnalysis(
+                        "First time with sum at 99.999999%", lambda result: get_time_at_precision(result, 1e-8)
+                    ),
+                    CustomAnalysis(
+                        "First time with sum at 99.9999999%", lambda result: get_time_at_precision(result, 1e-9)
+                    ),
+                ),
             ),
             FatigueModels.XIA_STABILIZED(
                 FatigueParameters(stabilization_factor=10),
                 integrator=Integrator.RK45,
-                x0=(0, 1+1e-4, 0),
+                x0=(0, 1 + 1e-4, 0),
                 rms_indices=(0, 1, 2),
                 custom_analyses=(
-                    CustomAnalysis("First time with sum at 100.001%",
-                                   lambda result: get_time_at_precision(result, 1e-5)),
-                    CustomAnalysis("First time with sum at 100.0001%",
-                                   lambda result: get_time_at_precision(result, 1e-6)),
-                    CustomAnalysis("First time with sum at 100.00001%",
-                                   lambda result: get_time_at_precision(result, 1e-7)),
-                    CustomAnalysis("First time with sum at 100.000001%",
-                                   lambda result: get_time_at_precision(result, 1e-8)),
-                    CustomAnalysis("First time with sum at 100.0000001%",
-                                   lambda result: get_time_at_precision(result, 1e-9)),
+                    CustomAnalysis(
+                        "First time with sum at 100.001%", lambda result: get_time_at_precision(result, 1e-5)
+                    ),
+                    CustomAnalysis(
+                        "First time with sum at 100.0001%", lambda result: get_time_at_precision(result, 1e-6)
+                    ),
+                    CustomAnalysis(
+                        "First time with sum at 100.00001%", lambda result: get_time_at_precision(result, 1e-7)
+                    ),
+                    CustomAnalysis(
+                        "First time with sum at 100.000001%", lambda result: get_time_at_precision(result, 1e-8)
+                    ),
+                    CustomAnalysis(
+                        "First time with sum at 100.0000001%", lambda result: get_time_at_precision(result, 1e-9)
+                    ),
                 ),
             ),
             FatigueModels.XIA(

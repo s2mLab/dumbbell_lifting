@@ -5,7 +5,7 @@ channels:
 - default
 dependencies:
 - python ==3.10
-- biorbd ==1.8.8
-- bioptim ==2.2.2
+- biorbd ==1.9.1
+- bioptim ==2.3.1
 - plotly ==5.10.0
 - python-kaleido ==0.2.1

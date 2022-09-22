@@ -49,6 +49,7 @@ class Xia(FatigueModel):
                     R=fatigue_params.R,
                     stabilization_factor=fatigue_params.stabilization_factor,
                     scaling=-fatigue_params.scaling,
+                    apply_to_joint_dynamics=False,
                 ),
                 XiaFatigueStabilized(
                     LD=fatigue_params.LD,
@@ -57,6 +58,7 @@ class Xia(FatigueModel):
                     R=fatigue_params.R,
                     stabilization_factor=fatigue_params.stabilization_factor,
                     scaling=fatigue_params.scaling,
+                    apply_to_joint_dynamics=False,
                 ),
                 split_controls=fatigue_params.split_controls,
             )
@@ -68,6 +70,7 @@ class Xia(FatigueModel):
                 R=fatigue_params.R,
                 stabilization_factor=fatigue_params.stabilization_factor,
                 scaling=fatigue_params.scaling,
+                apply_to_joint_dynamics=True,
             )
         else:
             raise NotImplementedError("Fatigue structure model not implemented")

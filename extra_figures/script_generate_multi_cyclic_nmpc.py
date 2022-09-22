@@ -199,4 +199,3 @@ fig.update_layout(
 fig.show()
 # export figure in eps
 fig.write_image("multi_cycli_nmpc.eps")
-

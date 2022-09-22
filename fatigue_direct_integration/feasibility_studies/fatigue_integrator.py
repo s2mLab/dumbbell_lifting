@@ -82,7 +82,7 @@ class FatigueIntegrator:
         fig = plt.figure()
         fig.set_size_inches(16, 9)
         # plt.rcParams["text.usetex"] = True
-        plt.rcParams["text.latex.preamble"] = (r"\usepackage{siunitx}", )
+        plt.rcParams["text.latex.preamble"] = (r"\usepackage{siunitx}",)
         plt.rcParams["font.family"] = "Times New Roman"
         self.axes = plt.axes()
 
@@ -109,8 +109,8 @@ class FatigueIntegrator:
         self.axes.set_xlim(self.study.plot_options.xlim)
         self.axes.set_ylim(self.study.plot_options.ylim)
         if not self.study.plot_options.keep_frame:
-            self.axes.spines['top'].set_visible(False)
-            self.axes.spines['right'].set_visible(False)
+            self.axes.spines["top"].set_visible(False)
+            self.axes.spines["right"].set_visible(False)
         self.axes.tick_params(axis="both", labelsize=font_size)
         if self.study.plot_options.legend is not None:
             supplementary_legend = None
@@ -171,7 +171,7 @@ class FatigueIntegrator:
         models = self.study.fatigue_models
 
         e = self._results[-1][0].y[models[0].rms_indices, :] - self._results[-1][1].y[models[1].rms_indices, :]
-        se = e ** 2
+        se = e**2
         mse = np.sum(se, axis=1) / self.study.n_points
         rmse = np.sqrt(mse)
 

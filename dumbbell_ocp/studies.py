@@ -482,7 +482,7 @@ class Study:
         data = getattr(sol, data_type.value)[key]
 
         e = data_ref - data
-        se = e ** 2
+        se = e**2
         mse = np.sum(se, axis=1) / data_ref.shape[1]
         rmse = np.sqrt(mse)
         return rmse
