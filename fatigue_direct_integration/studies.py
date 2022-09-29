@@ -168,7 +168,7 @@ class Study(Enum):
             supplementary_legend_title="$m_a + m_r + m_f$",
             options=({"linestyle": "-"}, {"linestyle": "--"}, {"linestyle": "-."}, {"linestyle": ":"},
                      {"linestyle": "-", "linewidth": 3, }),
-            save_path="STUDY1_STABILIZER_EFFECT.png",
+            # save_path="STUDY1_STABILIZER_EFFECT.png",
             xlim=(0, 1.01),
             ylim=(0, 101),
             keep_frame=False,
