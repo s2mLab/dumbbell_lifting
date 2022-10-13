@@ -28,9 +28,9 @@ class OcpConfiguration:
         self,
         name: str,
         model_path: str,
-        n_shoot: int,
+        n_shoot_per_round_trip: int,
         n_round_trips: int,
-        final_time: float,
+        round_trip_time: float,
         x0: tuple[float, ...],
         tau_limits: tuple[float, float],
         dynamics: DynamicsFcn,
@@ -47,8 +47,10 @@ class OcpConfiguration:
         self.save_name = name.replace("$", "")
         self.save_name = self.save_name.replace("\\", "")
         self.n_round_trips = n_round_trips
-        self.n_shoot = (n_shoot - 1) * self.n_round_trips + 1
-        self.final_time = final_time * self.n_round_trips
+        self.n_shoot_per_round_trip = n_shoot_per_round_trip
+        self.n_shoot = (self.n_shoot_per_round_trip - 1) * self.n_round_trips + 1
+        self.round_trip_time = round_trip_time
+        self.final_time = self.round_trip_time * self.n_round_trips
         self.use_sx = use_sx
         self.ode_solver = ode_solver
         self.solver: Solver = solver
@@ -75,7 +77,7 @@ class OcpConfiguration:
                 index=1,
                 target=lower_target if i % 2 == 0 else upper_target,
                 key="q",
-                node=self.n_shoot * i // (self.n_round_trips * 2),
+                node=self.n_shoot_per_round_trip * i // (self.n_round_trips * 2),
             )
 
         # Initializing dynamics
@@ -132,6 +134,9 @@ class OcpConfiguration:
         else:
             raise NotImplementedError("Dynamics not implemented yet")
 
+        self._set_generic_ocp()
+
+    def _set_generic_ocp(self):
         # Initialize the actual OCP
         self.ocp = OptimalControlProgram(
             biorbd_model=self.model,

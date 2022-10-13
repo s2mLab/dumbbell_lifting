@@ -1,0 +1,6 @@
+mass 3.6
+com 0 0 0
+inertia
+Ixx = 0.00370584	Ixy = 0			Ixz = 0
+Iyx = 0			Iyy = 0.04669628	Iyz = 0
+Izx = 0			Izy = 0			Izz = 0.04669628

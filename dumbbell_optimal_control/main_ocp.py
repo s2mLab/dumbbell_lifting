@@ -1,4 +1,5 @@
-from studies import Study, Conditions, DataType
+from studies_ocp import Conditions
+from studies import Study, DataType
 
 
 def main():
