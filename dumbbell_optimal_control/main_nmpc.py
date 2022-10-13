@@ -3,7 +3,7 @@ from studies import Study
 
 
 def main():
-    all_studies = (Study(Conditions.DEBUG_FAST),)
+    all_studies = (Study(Conditions.DEBUG_ALL_CONDITIONS),)
 
     # --- Solve the program --- #
     for study in all_studies:
