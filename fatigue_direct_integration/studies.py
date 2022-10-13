@@ -93,7 +93,7 @@ class Study(Enum):
                 colors=(CustomColor.Green, CustomColor.Yellow, CustomColor.Red),
             ),
         ),
-        t_end=1,
+        t_end=60,
         fixed_target=0.8,
         target_function=TargetFunctions.TARGET_UP_TO_END,
         n_points=100000,
@@ -189,6 +189,20 @@ class Study(Enum):
             CustomAnalysis("First time with sum at 99.99999%", lambda result: get_time_at_precision(result, 1e-7)),
             CustomAnalysis("First time with sum at 99.999999%", lambda result: get_time_at_precision(result, 1e-8)),
             CustomAnalysis("First time with sum at 99.9999999%", lambda result: get_time_at_precision(result, 1e-9)),
+        ),
+        plot_options=PlotOptions(
+            title="",
+            legend=(
+            "$m_a$", "$m_r$", "$m_f$", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_", "_",
+            "_", "$TL$"),
+            supplementary_legend=("$S = 200$", "$S = 100$", "$S = 50$", "$S = 10$", "$S = 0$"),
+            supplementary_legend_title="$m_a + m_r + m_f$",
+            options=({"linestyle": "-"}, {"linestyle": "--"}, {"linestyle": "-."}, {"linestyle": ":"},
+                     {"linestyle": "-", "linewidth": 3, }),
+            # save_path="STUDY1_STABILIZER_EFFECT.png",
+            xlim=(0, 1.01),
+            ylim=(0, 101),
+            keep_frame=False,
         ),
     )
 
