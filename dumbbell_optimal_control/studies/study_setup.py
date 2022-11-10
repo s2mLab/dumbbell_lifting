@@ -6,7 +6,7 @@ class StudySetup:
     def __init__(
         self,
         model_path: str = "models/arm26.bioMod",
-        n_shoot_per_round_trip: int = 51,
+        n_shoot_per_round_trip: int = 50,
         round_trip_time: float = 1,
         n_round_trips: int = 3,
         n_round_trips_to_advance: int = 1,

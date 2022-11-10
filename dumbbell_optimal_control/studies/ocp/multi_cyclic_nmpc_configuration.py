@@ -73,7 +73,7 @@ class MultiCyclicNmpcConfiguration(OcpConfiguration):
             n_threads=self.n_threads,
         )
 
-    def perform(self) -> tuple[Solution, list[Solution]]:
+    def perform(self) -> tuple[Solution, list[Solution, ...]]:
         """
 
         Parameters

@@ -48,7 +48,7 @@ class OcpConfiguration:
         self.save_name = self.save_name.replace("\\", "")
         self.n_round_trips = n_round_trips
         self.n_shoot_per_round_trip = n_shoot_per_round_trip
-        self.n_shoot = (self.n_shoot_per_round_trip - 1) * self.n_round_trips + 1
+        self.n_shoot = self.n_shoot_per_round_trip * self.n_round_trips - 1
         self.round_trip_time = round_trip_time
         self.final_time = self.round_trip_time * self.n_round_trips
         self.use_sx = use_sx
@@ -77,7 +77,7 @@ class OcpConfiguration:
                 index=1,
                 target=lower_target if i % 2 == 0 else upper_target,
                 key="q",
-                node=self.n_shoot_per_round_trip * i // (self.n_round_trips * 2),
+                node=(self.n_shoot_per_round_trip * self.n_round_trips * i) // (self.n_round_trips * 2),
             )
 
         # Initializing dynamics
