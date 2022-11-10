@@ -12,7 +12,7 @@ def main():
 
         # study.solution[x][y]
         # Condition x, if y is 0: then full solution, if y is 1: then a tuple of all intermediate OCP
-        study.solution[0][0].graphs()
+        # study.solution[0][0].graphs()
         study.solution[0][0].animate(
             show_floor=False,
             show_muscles=False,

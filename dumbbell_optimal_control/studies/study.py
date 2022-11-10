@@ -39,6 +39,8 @@ class Study:
             if key == "all":
                 continue
             for j, sol in enumerate(self.solution[0][1]):
+                if sol.status == 1:
+                    continue
                 if j == 0:
                     fig, ax = plt.subplots(1, len(self.solution[0][0].states[key]))
                     fig.suptitle(f"States: {key}")
@@ -51,6 +53,8 @@ class Study:
             if key == "all":
                 continue
             for j, sol in enumerate(self.solution[0][1]):
+                if sol.status == 1:
+                    continue
                 if j == 0:
                     fig, ax = plt.subplots(1, len(self.solution[0][0].controls[key]))
                     fig.suptitle(f"Control: {key}")
@@ -60,6 +64,8 @@ class Study:
                     ax[i].set_xlabel("Time (s)")
 
         for j, sol in enumerate(self.solution[0][1]):
+            if sol.status == 1:
+                continue
             if j == 0:
                 fig, ax = plt.subplots(1, len(self.solution[0][0].controls[key]))
                 fig.suptitle("TL + mf")

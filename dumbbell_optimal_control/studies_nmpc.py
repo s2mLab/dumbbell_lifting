@@ -21,7 +21,7 @@ class Conditions(Enum):
         studies=(
             # get_nmpc(Program.TORQUE_DRIVEN_NO_FATIGUE, StudySetup(n_total_round_trips=5)),
             # get_nmpc(Program.MUSCLE_DRIVEN_NO_FATIGUE, StudySetup(n_total_round_trips=5)),
-            get_nmpc(Program.TORQUE_DRIVEN_XIA, StudySetup(n_total_round_trips=20, split_controls=True)),
+            get_nmpc(Program.TORQUE_DRIVEN_XIA, StudySetup(n_total_round_trips=10, split_controls=True)),
             # get_nmpc(Program.TORQUE_DRIVEN_XIA, StudySetup(n_total_round_trips=5, split_controls=False)),
             # get_nmpc(Program.MUSCLE_DRIVEN_XIA, StudySetup(n_total_round_trips=5)),
         ),

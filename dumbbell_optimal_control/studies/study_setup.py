@@ -36,11 +36,11 @@ class StudySetup:
         self.solver = solver
         if self.solver is None:
             self.solver = Solver.IPOPT(
-                show_online_optim=True,
+                show_online_optim=False,
                 _print_level=5,
                 # _linear_solver="ma57",
                 _hessian_approximation="exact",
-                _max_iter=1000,
+                _max_iter=100,
             )
         self.use_sx = use_sx
         self.n_thread = n_thread
