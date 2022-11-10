@@ -20,12 +20,63 @@ class Study:
         self._has_run: bool = False
         self._plots_are_prepared: bool = False
         self.conditions: StudyConfiguration = conditions.value
-        self.solution: list[Solution, ...] = []
+        self.solution: list[Solution, ...] | tuple[Solution, list[Solution, ...]] = []
 
     def run(self):
         for condition in self.conditions.studies:
             self.solution.append(condition.perform())
         self._has_run = True
+
+    def plot_data_stacked_per_cycle(self):
+        color = ["b", "g", "r", "y", "m", "c", "k"]
+        import matplotlib.pyplot as plt
+
+        # opacity and linewidth as function of cycle considered
+        linewidth = np.linspace(0.5, 1.5, len(self.solution[0][1]))
+        opacity = np.linspace(0.3, 1, len(self.solution[0][1]))
+
+        for key in self.solution[0][0].states.keys():
+            if key == "all":
+                continue
+            for j, sol in enumerate(self.solution[0][1]):
+                if j == 0:
+                    fig, ax = plt.subplots(1, len(self.solution[0][0].states[key]))
+                    fig.suptitle(f"States: {key}")
+                for i, state in enumerate(sol.states[key]):
+                    ax[i].plot(sol.time, state, label=f"{key}_{i}", color=color[0], linewidth=linewidth[j], alpha=opacity[j])
+                    ax[i].set_title(f"State {key}{i}")
+                    ax[i].set_xlabel("Time (s)")
+
+        for key in self.solution[0][0].controls.keys():
+            if key == "all":
+                continue
+            for j, sol in enumerate(self.solution[0][1]):
+                if j == 0:
+                    fig, ax = plt.subplots(1, len(self.solution[0][0].controls[key]))
+                    fig.suptitle(f"Control: {key}")
+                for i, state in enumerate(sol.controls[key]):
+                    ax[i].plot(sol.time, state, label=f"{key}_{i}", color=color[0], linewidth=linewidth[j], alpha=opacity[j])
+                    ax[i].set_title(f"Control {key}{i}")
+                    ax[i].set_xlabel("Time (s)")
+
+        for j, sol in enumerate(self.solution[0][1]):
+            if j == 0:
+                fig, ax = plt.subplots(1, len(self.solution[0][0].controls[key]))
+                fig.suptitle("TL + mf")
+            for i, (tau, state) in enumerate(zip(sol.controls["tau_plus"], sol.states["tau_plus_mf"])):
+                ax[i].plot(sol.time, state, label=f"{key}_{i}", color=color[0], linewidth=linewidth[j], alpha=opacity[j])
+                ax[i].plot(sol.time, tau / 50, label=f"{key}_{i}", color=color[1], linewidth=linewidth[j],
+                           alpha=opacity[j])
+                ax[i].plot(sol.time, tau / 50 + state, label=f"{key}_{i}", color=color[2], linewidth=linewidth[j],
+                           alpha=opacity[j])
+                # horizontal line at y=1
+                ax[i].axhline(y=1, color="k", linestyle="--")
+
+                ax[i].set_title(f"TL + mf {i}")
+                ax[i].set_xlabel("Time (s)")
+
+        # plt.legend()
+        plt.show()
 
     def print_results(self):
         print("Number of iterations")
