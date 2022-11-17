@@ -8,7 +8,7 @@ class StudySetup:
         model_path: str = "models/arm26.bioMod",
         n_shoot_per_round_trip: int = 50,
         round_trip_time: float = 1,
-        n_round_trips: int = 3,
+        n_round_trips: int = 5,
         n_round_trips_to_advance: int = 1,
         n_total_round_trips: int = 10,
         x0: tuple[float, ...] = (0.07, 15 * np.pi / 180, 0, 0),
@@ -40,7 +40,7 @@ class StudySetup:
                 _print_level=5,
                 # _linear_solver="ma57",
                 _hessian_approximation="exact",
-                _max_iter=100,
+                _max_iter=1000,
             )
         self.use_sx = use_sx
         self.n_thread = n_thread

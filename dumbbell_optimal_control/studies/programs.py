@@ -59,12 +59,6 @@ class ProgramsFcn:
 
         # fatigue constraints
         constraints = ConstraintList()
-        # constraints.add(
-        #     ConstraintFcn.TRACK_STATE, key="tau_plus_mf", max_bound=0.9, node=Node.ALL,
-        # )
-        # constraints.add(
-        #     ConstraintFcn.TRACK_STATE, key="tau_minus_mf", max_bound=0.9, node=Node.ALL,
-        # )
 
         def custom_constraint_plus(all_pn, key = "tau_plus") -> MX:
             """
@@ -97,6 +91,39 @@ class ProgramsFcn:
         constraints.add(custom_constraint_plus, max_bound=1, node=Node.ALL)
         constraints.add(custom_constraint_minus, max_bound=1, node=Node.ALL)
         # constraints.add(custom_constraint_minus, max_bound=1, node=Node.ALL)
+
+        # TEST DMADT - MR * 100 <=0
+        # def dmadt_plus(all_pn) -> MX:
+        #     """
+        #
+        #     Parameters
+        #     ----------
+        #     all_pn: PenaltyNodeList
+        #         The penalty node elements
+        #    """
+        #
+        #     if all_pn.nlp.u_bounds.max[0, 1] != 0:
+        #         return all_pn.nlp.controls["tau_plus"].cx / (all_pn.nlp.u_bounds.max[0, 1]) + all_pn.nlp.states["tau_plus_mf"].cx
+        #         # otherwise, this one is not used...
+        #     else:
+        #         return all_pn.nlp.controls["tau_plus"].cx / 50 + all_pn.nlp.states["tau_plus_mf"].cx
+        #
+        # def dmadt_minus(all_pn) -> MX:
+        #     """
+        #
+        #     Parameters
+        #     ----------
+        #     all_pn: PenaltyNodeList
+        #         The penalty node elements
+        #    """
+        #     if all_pn.nlp.u_bounds.min[0, 1] != 0:
+        #         return all_pn.nlp.controls["tau_minus"].cx / (all_pn.nlp.u_bounds.min[0, 1]) + all_pn.nlp.states["tau_minus_mf"].cx
+        #     else:
+        #         return MX(0)
+        #
+        # constraints.add(dmadt_plus, max_bound=0, node=Node.ALL, quadratic=True)
+        # constraints.add(dmadt_minus, max_bound=0, node=Node.ALL, quadratic=True)
+
 
         return r"$TauXia$", DynamicsFcn.TORQUE_DRIVEN, fatigue_model, objectives, constraints
 

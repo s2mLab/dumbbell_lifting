@@ -9,6 +9,13 @@ from .study_configuration import StudyConfiguration
 from .ocp import DataType
 
 
+class CustomColor:
+    Green = "#00cc96"
+    Yellow = "#ffa15a"
+    Red = "#ef553b"
+    Gray = "tab:gray"
+
+
 class Conditions(Protocol):
     name: str
     value: StudyConfiguration
@@ -32,7 +39,8 @@ class Study:
         import matplotlib.pyplot as plt
 
         # opacity and linewidth as function of cycle considered
-        linewidth = np.linspace(0.5, 1.5, len(self.solution[0][1]))
+        linewidth = np.exp(-1 + np.linspace(0.5, 1, len(self.solution[0][1]))) + 0.5
+        linewidth[0] = 1.5
         opacity = np.linspace(0.3, 1, len(self.solution[0][1]))
 
         for key in self.solution[0][0].states.keys():
@@ -45,7 +53,8 @@ class Study:
                     fig, ax = plt.subplots(1, len(self.solution[0][0].states[key]))
                     fig.suptitle(f"States: {key}")
                 for i, state in enumerate(sol.states[key]):
-                    ax[i].plot(sol.time, state, label=f"{key}_{i}", color=color[0], linewidth=linewidth[j], alpha=opacity[j])
+                    ax[i].plot(sol.time, state, label=f"{key}_{i}", color=color[0], linewidth=linewidth[j],
+                               alpha=opacity[j])
                     ax[i].set_title(f"State {key}{i}")
                     ax[i].set_xlabel("Time (s)")
 
@@ -59,7 +68,8 @@ class Study:
                     fig, ax = plt.subplots(1, len(self.solution[0][0].controls[key]))
                     fig.suptitle(f"Control: {key}")
                 for i, state in enumerate(sol.controls[key]):
-                    ax[i].plot(sol.time, state, label=f"{key}_{i}", color=color[0], linewidth=linewidth[j], alpha=opacity[j])
+                    ax[i].plot(sol.time, state, label=f"{key}_{i}", color=color[0], linewidth=linewidth[j],
+                               alpha=opacity[j])
                     ax[i].set_title(f"Control {key}{i}")
                     ax[i].set_xlabel("Time (s)")
 
@@ -70,7 +80,8 @@ class Study:
                 fig, ax = plt.subplots(1, len(self.solution[0][0].controls[key]))
                 fig.suptitle("TL + mf")
             for i, (tau, state) in enumerate(zip(sol.controls["tau_plus"], sol.states["tau_plus_mf"])):
-                ax[i].plot(sol.time, state, label=f"{key}_{i}", color=color[0], linewidth=linewidth[j], alpha=opacity[j])
+                ax[i].plot(sol.time, state, label=f"{key}_{i}", color=color[0], linewidth=linewidth[j],
+                           alpha=opacity[j])
                 ax[i].plot(sol.time, tau / 50, label=f"{key}_{i}", color=color[1], linewidth=linewidth[j],
                            alpha=opacity[j])
                 ax[i].plot(sol.time, tau / 50 + state, label=f"{key}_{i}", color=color[2], linewidth=linewidth[j],
@@ -82,6 +93,151 @@ class Study:
                 ax[i].set_xlabel("Time (s)")
 
         # plt.legend()
+        plt.show()
+
+    @staticmethod
+    def compute_target_load(tau, tau_max):
+        return tau / tau_max
+
+    @staticmethod
+    def compute_tau_limit(tau_max, mf):
+        return (1 - mf) * tau_max
+
+    def plot_torques(self):
+        color = ["b", "g", "r", "y", "m", "c", "k"]
+        import matplotlib.pyplot as plt
+
+        sol = self.solution[0][0]
+        # subplot for each dof
+        n_dof = sol.states['q'].shape[0]
+        time = np.arange(0, len(sol.states["q"][0, :])) * self.solution[0][1][0].time[1]
+        fig, ax = plt.subplots(1, n_dof)
+
+        for i in range(n_dof):
+            ax[i].plot(time, sol.controls["tau_plus"][i, :], color=color[0], label="tau_plus")
+            tau_lim = self.compute_tau_limit(50, sol.states["tau_plus_mf"][i, :])
+            ax[i].plot(time, tau_lim, label="tau_lim", linestyle="--", color="k")
+
+            ax[i].plot(time, sol.controls["tau_minus"][i, :], color=color[1], label="tau_minus")
+            tau_lim = self.compute_tau_limit(-50, sol.states["tau_minus_mf"][i, :])
+            ax[i].plot(time, tau_lim, linestyle="--", color="k")
+
+            if i == 0:
+                ax[i].set_title(f"Shoulder")
+            elif i == 1:
+                ax[i].set_title(f"Elbow")
+
+            ax[i].set_xlabel("Time (s)")
+        ax[0].set_ylabel("Torque (Nm)")
+
+        # plot a vertical line for each cycle
+        for i in range(1, len(self.solution[0][1])):
+            for j in range(n_dof):
+                for jj in range(2):
+                    n = self.conditions.studies[0].n_round_trips
+                    t_end = self.solution[0][1][0].time[-1]
+                    vline_x = [t_end/n * i for i in range(1, n+1)]
+                    for vline in vline_x:
+                        ax[j].axvline(x=vline, color="k", linestyle="--", linewidth=0.5)
+
+        plt.legend()
+        plt.show()
+
+    def plot_pools(self):
+        sol = self.solution[0][0]
+        keys_set = [["tau_plus_ma", "tau_plus_mr", "tau_plus_mf"],
+                    ["tau_minus_ma", "tau_minus_mr", "tau_minus_mf"]]
+        n_dof = sol.states['q'].shape[0]
+
+        colors = (CustomColor.Green, CustomColor.Yellow, CustomColor.Red)
+        time = np.arange(0, len(sol.states["q"][0, :])) * self.solution[0][1][0].time[1]
+
+        fig, ax = plt.subplots(2, n_dof)
+        fig.set_size_inches(16, 9)
+
+        # plt.rcParams["text.usetex"] = True
+        plt.rcParams["text.latex.preamble"] = (r"\usepackage{siunitx}",)
+        plt.rcParams["font.family"] = "Times New Roman"
+        font_size = 12
+
+        for j in range(n_dof):
+            for i, keys in enumerate(keys_set):
+                tau_key = "tau_plus" if i == 0 else "tau_minus"
+                tau_max = 50 if i == 0 else -50
+                ax[i, j].stackplot(time, np.vstack((sol.states[key][0, :] * 100 for key in keys)), colors=colors,
+                                   alpha=0.4)
+                ax[i, j].plot(time,
+                              sol.controls[tau_key][0, :] * 100 / tau_max,
+                              color="tab:blue",
+                              linewidth=4,
+                              )
+                ax[i, j].set_xlabel(r"Time (\SI{}{\second})", fontsize=font_size)
+                ax[i, j].set_ylabel(r"Level (\SI{}{\percent})", fontsize=font_size)
+                ax[i, j].set_ylim([0, 101])
+                ax[i, j].set_xlim([0, time[-1]])
+                ax[i, j].spines["top"].set_visible(False)
+                ax[i, j].spines["right"].set_visible(False)
+                ax[i, j].tick_params(axis="both", labelsize=font_size)
+                ax[i, j].legend()
+
+        # plot a vertical line for each cycle
+        for i in range(1, len(self.solution[0][1])):
+            for j in range(n_dof):
+                for jj in range(2):
+                    ax[jj, j].axvline(x=self.solution[0][1][0].time[-1] * (i+1), color="k", linestyle="--", alpha=0.5)
+
+        ax[0, 0].set_title(r"Shoulder \tau_plus", fontsize=font_size)
+        ax[0, 1].set_title(r"Elbow \tau_plus", fontsize=font_size)
+        ax[1, 0].set_title(r"Shoulder \tau_minus", fontsize=font_size)
+        ax[1, 1].set_title(r"Elbow \tau_minus", fontsize=font_size)
+        ax[i, j].legend(
+            (
+                "$m_a$",
+                "$m_r$",
+                "$m_f$",
+                "$m_a+m_r+m_f$",
+                "_",
+                "_",
+                "_",
+                "_",
+                "$TL$",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "$TL$",
+            ),
+            loc="upper right",
+            fontsize=font_size,
+            framealpha=0.9,
+            title_fontsize=20,
+        )
+
+        # plot a vertical line for each cycle
+        for i in range(1, len(self.solution[0][1])):
+            for j in range(n_dof):
+                for jj in range(2):
+                    n = self.conditions.studies[0].n_round_trips
+                    t_end = self.solution[0][1][0].time[-1]
+                    vline_x = [t_end / n * i for i in range(1, n + 1)]
+                    for vline in vline_x:
+                        ax[jj, j].axvline(x=vline, color="k", linestyle="--", linewidth=0.5, alpha=0.5)
+
+        # if maximized:
+        #     plt.get_current_fig_manager().window.showMaximized()
+
+        # if self.study.plot_options.save_name:
+        #     plt.savefig(f"{self.prepare_and_get_results_dir()}/{self.study.plot_options.save_name}.png", dpi=100)
+        #     plt.savefig(f"{self.prepare_and_get_results_dir()}/{self.study.plot_options.save_name}.pdf", format="pdf")
+        #     plt.savefig(f"{self.prepare_and_get_results_dir()}/{self.study.plot_options.save_name}.eps", format="eps")
+
         plt.show()
 
     def print_results(self):
@@ -294,7 +450,7 @@ class Study:
         data = getattr(sol, data_type.value)[key]
 
         e = data_ref - data
-        se = e**2
+        se = e ** 2
         mse = np.sum(se, axis=1) / data_ref.shape[1]
         rmse = np.sqrt(mse)
         return rmse
