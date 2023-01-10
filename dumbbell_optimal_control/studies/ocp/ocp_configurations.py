@@ -14,6 +14,7 @@ from bioptim import (
     FatigueInitialGuess,
     OptimalControlProgram,
     Solver,
+    BiorbdModel,
 )
 from bioptim.dynamics.ode_solver import OdeSolverBase
 import biorbd_casadi as biorbd
@@ -57,10 +58,10 @@ class OcpConfiguration:
         self.n_threads = n_threads
 
         # Initializing model
-        self.model = biorbd.Model(model_path)
-        self.n_q = self.model.nbQ()
-        self.n_tau = self.model.nbGeneralizedTorque()
-        self.n_muscles = self.model.nbMuscleTotal()
+        self.model = BiorbdModel(model_path)
+        self.n_q = self.model.nb_q
+        self.n_tau = self.model.nb_tau
+        self.n_muscles = self.model.nb_muscles
         self.tau_min, self.tau_max = tau_limits
 
         # Initialize objectives of the problem

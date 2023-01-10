@@ -57,7 +57,7 @@ class MultiCyclicNmpcConfiguration(OcpConfiguration):
 
     def _set_generic_ocp(self):
         self.ocp = MultiCyclicNonlinearModelPredictiveControl(
-            biorbd_model=self.model,
+            bio_model=self.model,
             dynamics=self.dynamics,
             n_cycles_simultaneous=self.n_round_trips,
             n_cycles_to_advance=self.n_round_trips_to_advance,
