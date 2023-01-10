@@ -45,7 +45,7 @@ class Conditions(Enum):
             get_nmpc(Program.TORQUE_DRIVEN_XIA,
                      StudySetup(
                          n_round_trips_to_advance=1,
-                         n_round_trips=5,
+                         n_round_trips=3,
                          n_total_round_trips=20,
                          split_controls=True,
                      )),

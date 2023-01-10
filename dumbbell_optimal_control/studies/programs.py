@@ -1,7 +1,7 @@
 from enum import Enum
 
 from bioptim import ObjectiveList, ConstraintList, ObjectiveFcn, ConstraintFcn, Node
-from casadi import MX
+from casadi import MX, if_else
 
 from .ocp import (
     DynamicsFcn,
@@ -60,7 +60,10 @@ class ProgramsFcn:
         # fatigue constraints
         constraints = ConstraintList()
 
-        def custom_constraint_plus(all_pn, key = "tau_plus") -> MX:
+        # torque max
+        tau_max = 50
+
+        def TL_plus_mf_inf_one_plus(all_pn) -> MX:
             """
 
             Parameters
@@ -70,12 +73,12 @@ class ProgramsFcn:
            """
 
             if all_pn.nlp.u_bounds.max[0, 1] != 0:
-                return all_pn.nlp.controls["tau_plus"].cx / (all_pn.nlp.u_bounds.max[0, 1]) + all_pn.nlp.states["tau_plus_mf"].cx
+                return MX(0)
                 # otherwise, this one is not used...
             else:
-                return all_pn.nlp.controls["tau_plus"].cx / 50 + all_pn.nlp.states["tau_plus_mf"].cx
+                return all_pn.nlp.controls["tau_plus"].cx / tau_max + all_pn.nlp.states["tau_plus_mf"].cx
 
-        def custom_constraint_minus(all_pn) -> MX:
+        def TL_plus_mf_inf_one_minus(all_pn) -> MX:
             """
 
             Parameters
@@ -84,46 +87,59 @@ class ProgramsFcn:
                 The penalty node elements
            """
             if all_pn.nlp.u_bounds.min[0, 1] != 0:
-                return all_pn.nlp.controls["tau_minus"].cx / (all_pn.nlp.u_bounds.min[0, 1]) + all_pn.nlp.states["tau_minus_mf"].cx
+                return all_pn.nlp.controls["tau_minus"].cx / - tau_max + all_pn.nlp.states["tau_minus_mf"].cx
             else:
                 return MX(0)
 
-        constraints.add(custom_constraint_plus, max_bound=1, node=Node.ALL)
-        constraints.add(custom_constraint_minus, max_bound=1, node=Node.ALL)
-        # constraints.add(custom_constraint_minus, max_bound=1, node=Node.ALL)
+        # constraints.add(TL_plus_mf_inf_one_plus, min_bound=0,  max_bound=1, node=Node.ALL)
+        # constraints.add(TL_plus_mf_inf_one_minus, min_bound=0, max_bound=1, node=Node.ALL)
 
         # TEST DMADT - MR * 100 <=0
-        # def dmadt_plus(all_pn) -> MX:
-        #     """
-        #
-        #     Parameters
-        #     ----------
-        #     all_pn: PenaltyNodeList
-        #         The penalty node elements
-        #    """
-        #
-        #     if all_pn.nlp.u_bounds.max[0, 1] != 0:
-        #         return all_pn.nlp.controls["tau_plus"].cx / (all_pn.nlp.u_bounds.max[0, 1]) + all_pn.nlp.states["tau_plus_mf"].cx
-        #         # otherwise, this one is not used...
-        #     else:
-        #         return all_pn.nlp.controls["tau_plus"].cx / 50 + all_pn.nlp.states["tau_plus_mf"].cx
-        #
-        # def dmadt_minus(all_pn) -> MX:
-        #     """
-        #
-        #     Parameters
-        #     ----------
-        #     all_pn: PenaltyNodeList
-        #         The penalty node elements
-        #    """
-        #     if all_pn.nlp.u_bounds.min[0, 1] != 0:
-        #         return all_pn.nlp.controls["tau_minus"].cx / (all_pn.nlp.u_bounds.min[0, 1]) + all_pn.nlp.states["tau_minus_mf"].cx
-        #     else:
-        #         return MX(0)
-        #
-        # constraints.add(dmadt_plus, max_bound=0, node=Node.ALL, quadratic=True)
-        # constraints.add(dmadt_minus, max_bound=0, node=Node.ALL, quadratic=True)
 
+        def dmadt_plus(all_pn) -> MX:
+            """
+
+            Parameters
+            ----------
+            all_pn: PenaltyNodeList
+                The penalty node elements
+           """
+            if all_pn.nlp.u_bounds.max[0, 1] != 0:
+                return MX(-1)
+                # otherwise, this one is not used...
+            else:
+                idx = all_pn.nlp.states["tau_plus_ma"].index
+                # return if_else(all_pn.nlp.states["tau_plus_mr"].cx < 0.01, all_pn.nlp.dynamics_func(
+                #     all_pn.nlp.states.cx,
+                #     all_pn.nlp.controls.cx,
+                #     all_pn.nlp.parameters.cx
+                # )[idx], MX(-1))
+                return all_pn.nlp.dynamics_func(
+                    all_pn.nlp.states.cx,
+                    all_pn.nlp.controls.cx,
+                    all_pn.nlp.parameters.cx
+                )[idx] - 1 * all_pn.nlp.states["tau_plus_mr"].cx
+
+        def dmadt_minus(all_pn) -> MX:
+            """
+
+            Parameters
+            ----------
+            all_pn: PenaltyNodeList
+                The penalty node elements
+            """
+
+            if all_pn.nlp.u_bounds.min[0, 1] != 0:
+                return all_pn.nlp.dynamics_func(
+                    all_pn.nlp.states.cx,
+                    all_pn.nlp.controls.cx,
+                    all_pn.nlp.parameters.cx
+                )[all_pn.nlp.states["tau_minus_ma"].index] - 1 * all_pn.nlp.states["tau_minus_mr"].cx
+            else:
+                return MX(-1)
+
+        constraints.add(dmadt_plus, min_bound=-1e8, max_bound=0, node=Node.ALL)
+        constraints.add(dmadt_minus, min_bound=-1e8, max_bound=0, node=Node.ALL)
 
         return r"$TauXia$", DynamicsFcn.TORQUE_DRIVEN, fatigue_model, objectives, constraints
 

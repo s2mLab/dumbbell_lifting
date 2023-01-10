@@ -38,7 +38,7 @@ class StudySetup:
             self.solver = Solver.IPOPT(
                 show_online_optim=False,
                 _print_level=5,
-                # _linear_solver="ma57",
+                _linear_solver="ma57",
                 _hessian_approximation="exact",
                 _max_iter=1000,
             )

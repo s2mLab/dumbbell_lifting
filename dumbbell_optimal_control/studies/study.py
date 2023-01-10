@@ -190,35 +190,35 @@ class Study:
         ax[0, 1].set_title(r"Elbow \tau_plus", fontsize=font_size)
         ax[1, 0].set_title(r"Shoulder \tau_minus", fontsize=font_size)
         ax[1, 1].set_title(r"Elbow \tau_minus", fontsize=font_size)
-        ax[i, j].legend(
-            (
-                "$m_a$",
-                "$m_r$",
-                "$m_f$",
-                "$m_a+m_r+m_f$",
-                "_",
-                "_",
-                "_",
-                "_",
-                "$TL$",
-                "_",
-                "_",
-                "_",
-                "_",
-                "_",
-                "_",
-                "_",
-                "_",
-                "_",
-                "_",
-                "_",
-                "$TL$",
-            ),
-            loc="upper right",
-            fontsize=font_size,
-            framealpha=0.9,
-            title_fontsize=20,
-        )
+        # ax[i, j].legend(
+        #     (
+        #         "$m_a$",
+        #         "$m_r$",
+        #         "$m_f$",
+        #         "$m_a+m_r+m_f$",
+        #         "_",
+        #         "_",
+        #         "_",
+        #         "_",
+        #         "$TL$",
+        #         "_",
+        #         "_",
+        #         "_",
+        #         "_",
+        #         "_",
+        #         "_",
+        #         "_",
+        #         "_",
+        #         "_",
+        #         "_",
+        #         "_",
+        #         "$TL$",
+        #     ),
+        #     loc="upper right",
+        #     fontsize=font_size,
+        #     framealpha=0.9,
+        #     title_fontsize=20,
+        # )
 
         # plot a vertical line for each cycle
         for i in range(1, len(self.solution[0][1])):
