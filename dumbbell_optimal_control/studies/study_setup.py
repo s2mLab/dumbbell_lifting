@@ -11,6 +11,7 @@ class StudySetup:
         n_round_trips: int = 5,
         n_round_trips_to_advance: int = 1,
         n_total_round_trips: int = 10,
+        stop_if_fail: bool = True,
         x0: tuple[float, ...] = (0.07, 15 * np.pi / 180, 0, 0),
         tau_limits_no_muscles: tuple[float, float] = (-50, 50),
         tau_limits_with_muscles: tuple[float, float] = (-1, 1),
@@ -27,6 +28,7 @@ class StudySetup:
         self.n_round_trips_to_advance = n_round_trips_to_advance
         self.n_total_round_trips = n_total_round_trips
         self.round_trip_time = round_trip_time
+        self.stop_if_fail = stop_if_fail
         self.x0 = x0
         self.tau_limits_no_muscles = tau_limits_no_muscles
         self.tau_limits_with_muscles = tau_limits_with_muscles

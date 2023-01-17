@@ -140,7 +140,7 @@ class OcpConfiguration:
     def _set_generic_ocp(self):
         # Initialize the actual OCP
         self.ocp = OptimalControlProgram(
-            biorbd_model=self.model,
+            bio_model=self.model,
             dynamics=self.dynamics,
             n_shooting=self.n_shoot,
             phase_time=self.final_time,

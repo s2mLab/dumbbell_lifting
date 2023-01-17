@@ -22,19 +22,38 @@ class Conditions(Protocol):
 
 
 class Study:
+    """
+    This class supports the results of a study. It can plot the results, save the results, and print the results.
+
+    Attributes
+    ----------
+    name: str
+        The name of the study
+    _has_run: bool
+        A boolean indicating if the study has been run
+    _plots_are_prepared: bool
+        A boolean indicating if the plots have been prepared
+    _plots_are_prepared: bool
+        A boolean indicating if the plots have been prepared
+    conditions: StudyConfiguration
+        The configuration of the study
+    solution : list[Solution, ...] | tuple[Solution, list[Solution, ...], list[Solution, ...]]
+        self.solution[x][y] Condition x, if y is 0: then full solution, if y is 1: then a tuple of all windows OCP
+        solutions, if y is 2: then a list of all cycle solution
+    """
     def __init__(self, conditions: Conditions):
         self.name = conditions.name
         self._has_run: bool = False
         self._plots_are_prepared: bool = False
         self.conditions: StudyConfiguration = conditions.value
-        self.solution: list[Solution, ...] | tuple[Solution, list[Solution, ...]] = []
+        self.solution: list[Solution, ...] | tuple[Solution, list[Solution, ...], list[Solution, ...]] = []
 
     def run(self):
         for condition in self.conditions.studies:
             self.solution.append(condition.perform())
         self._has_run = True
 
-    def plot_data_stacked_per_cycle(self):
+    def plot_data_stacked_per_window(self):
         color = ["b", "g", "r", "y", "m", "c", "k"]
         import matplotlib.pyplot as plt
 
@@ -94,6 +113,139 @@ class Study:
 
         # plt.legend()
         plt.show()
+
+    def plot_data_stacked_per_cycle(self):
+        color = ["b", "g", "r", "y", "m", "c", "k"]
+        import matplotlib.pyplot as plt
+
+        # opacity and linewidth as function of cycle considered
+        linewidth = np.exp(-1 + np.linspace(0.5, 1, len(self.solution[0][1]))) + 0.5
+        linewidth[0] = 1.5
+        opacity = np.linspace(0.3, 1, len(self.solution[0][1]))
+        cyle_solutions = self.solution[0][2]
+        for key in self.solution[0][0].states.keys():
+            if key == "all":
+                continue
+            for j, sol in enumerate(cyle_solutions):
+                if sol.status == 1:
+                    continue
+                if j == 0:
+                    fig, ax = plt.subplots(1, len(self.solution[0][0].states[key]))
+                    fig.suptitle(f"States: {key}")
+                for i, state in enumerate(sol.states[key]):
+                    ax[i].plot(sol.time, state, label=f"{key}_{i}", color=color[0], linewidth=linewidth[j],
+                               alpha=opacity[j])
+                    ax[i].set_title(f"State {key}{i}")
+                    ax[i].set_xlabel("Time (s)")
+
+        for key in self.solution[0][0].controls.keys():
+            if key == "all":
+                continue
+            for j, sol in enumerate(cyle_solutions):
+                if sol.status == 1:
+                    continue
+                if j == 0:
+                    fig, ax = plt.subplots(1, len(self.solution[0][0].controls[key]))
+                    fig.suptitle(f"Control: {key}")
+                for i, state in enumerate(sol.controls[key]):
+                    ax[i].plot(sol.time, state, label=f"{key}_{i}", color=color[0], linewidth=linewidth[j],
+                               alpha=opacity[j])
+                    ax[i].set_title(f"Control {key}{i}")
+                    ax[i].set_xlabel("Time (s)")
+
+        for j, sol in enumerate(cyle_solutions):
+            if sol.status == 1:
+                continue
+            if j == 0:
+                fig, ax = plt.subplots(1, len(self.solution[0][0].controls[key]))
+                fig.suptitle("TL + mf")
+            for i, (tau, state) in enumerate(zip(sol.controls["tau_plus"], sol.states["tau_plus_mf"])):
+                ax[i].plot(sol.time, state, label=f"{key}_{i}", color=color[0], linewidth=linewidth[j],
+                           alpha=opacity[j])
+                ax[i].plot(sol.time, tau / 50, label=f"{key}_{i}", color=color[1], linewidth=linewidth[j],
+                           alpha=opacity[j])
+                ax[i].plot(sol.time, tau / 50 + state, label=f"{key}_{i}", color=color[2], linewidth=linewidth[j],
+                           alpha=opacity[j])
+                # horizontal line at y=1
+                ax[i].axhline(y=1, color="k", linestyle="--")
+
+                ax[i].set_title(f"TL + mf {i}")
+                ax[i].set_xlabel("Time (s)")
+
+        # plt.legend()
+        plt.show()
+
+    def plot_first_and_last_cycles(self):
+
+        color = ["g", "r"]
+        label = ["first", "last"]
+        # turn this into a dict
+        options = dict(color=color, label=label)
+
+        import matplotlib.pyplot as plt
+
+        # opacity and linewidth as function of cycle considered
+        linewidth = np.exp(-1 + np.linspace(0.5, 1, len(self.solution[0][1]))) + 0.5
+        linewidth[0] = 1.5
+        opacity = np.linspace(0.3, 1, len(self.solution[0][1]))
+
+        cycle_solutions = self.solution[0][2]
+        first_and_last_cycles = [cycle_solutions[0], cycle_solutions[-1]]
+
+        for key in self.solution[0][0].states.keys():
+            if key == "all":
+                continue
+            for j, sol in enumerate(first_and_last_cycles):
+                if sol.status == 1:
+                    continue
+                if j == 0:
+                    fig, ax = plt.subplots(1, len(self.solution[0][0].states[key]))
+                    fig.suptitle(f"States: {key}")
+                for i, state in enumerate(sol.states[key]):
+                    ax[i].plot(sol.time, state, label=label[j], color=color[j], linewidth=linewidth[j],
+                               alpha=opacity[j])
+                    ax[i].set_title(f"State {key}{i}")
+                    ax[i].set_xlabel("Time (s)")
+            plt.legend()
+
+        for key in self.solution[0][0].controls.keys():
+            if key == "all":
+                continue
+            for j, sol in enumerate(first_and_last_cycles):
+                if sol.status == 1:
+                    continue
+                if j == 0:
+                    fig, ax = plt.subplots(1, len(self.solution[0][0].controls[key]))
+                    fig.suptitle(f"Control: {key}")
+                for i, state in enumerate(sol.controls[key]):
+                    ax[i].plot(sol.time, state, label=label[j], color=color[j], linewidth=linewidth[j],
+                               alpha=opacity[j])
+                    ax[i].set_title(f"Control {key}{i}")
+                    ax[i].set_xlabel("Time (s)")
+
+        for j, sol in enumerate(first_and_last_cycles):
+            if sol.status == 1:
+                continue
+            if j == 0:
+                fig, ax = plt.subplots(1, len(self.solution[0][0].controls[key]))
+                fig.suptitle("TL + mf")
+            for i, (tau, state) in enumerate(zip(sol.controls["tau_plus"], sol.states["tau_plus_mf"])):
+                ax[i].plot(sol.time, state, label=label[j], color=color[j], linewidth=linewidth[j],
+                           alpha=opacity[j])
+                ax[i].plot(sol.time, tau / 50, label=label[j], color=color[j], linewidth=linewidth[j],
+                           alpha=opacity[j])
+                ax[i].plot(sol.time, tau / 50 + state, label=label[j], color=color[j], linewidth=linewidth[j],
+                           alpha=opacity[j])
+                # horizontal line at y=1
+                ax[i].axhline(y=1, color="k", linestyle="--")
+
+                ax[i].set_title(f"TL + mf {i}")
+                ax[i].set_xlabel("Time (s)")
+
+        plt.show()
+
+
+
 
     @staticmethod
     def compute_target_load(tau, tau_max):
@@ -164,10 +316,10 @@ class Study:
             for i, keys in enumerate(keys_set):
                 tau_key = "tau_plus" if i == 0 else "tau_minus"
                 tau_max = 50 if i == 0 else -50
-                ax[i, j].stackplot(time, np.vstack((sol.states[key][0, :] * 100 for key in keys)), colors=colors,
+                ax[i, j].stackplot(time, np.vstack((sol.states[key][j, :] * 100 for key in keys)), colors=colors,
                                    alpha=0.4)
                 ax[i, j].plot(time,
-                              sol.controls[tau_key][0, :] * 100 / tau_max,
+                              sol.controls[tau_key][j, :] * 100 / tau_max,
                               color="tab:blue",
                               linewidth=4,
                               )
@@ -252,6 +404,30 @@ class Study:
         print("Mean time per iteration to optimize")
         for study, sol in zip(self.conditions.studies, self.solution):
             print(f"\t{study.name} = {sol.real_time_to_optimize / sol.iterations:0.3f} second")
+
+    def plot_cost(self):
+
+        solutions = self.solution[0][1]
+
+        for i, sol in enumerate(solutions):
+            sol.detailed_cost_values()
+
+        torque_cost = [sol.detailed_cost[0]["cost_value_weighted"] for sol in solutions]
+        tau_minus_mf_cost = [sol.detailed_cost[1]["cost_value_weighted"] for sol in solutions]
+        tau_plus_mf_cost = [sol.detailed_cost[2]["cost_value_weighted"] for sol in solutions]
+        shoulder_state_cost = [sol.detailed_cost[3]["cost_value_weighted"] for sol in solutions]
+
+        plt.figure()
+        plt.plot(torque_cost, label="Torque cost", marker="o")
+        plt.plot(tau_minus_mf_cost, label="Tau minus cost", marker="o")
+        plt.plot(tau_plus_mf_cost, label="Tau plus cost", marker="o")
+        plt.plot(shoulder_state_cost, label="Shoulder state cost", marker="o")
+        # x-axis only show ticks for int
+        plt.xticks(np.arange(len(solutions)), np.arange(1, len(solutions) + 1))
+        plt.xlabel("Cycle")
+        plt.ylabel("Cost")
+        plt.legend()
+        plt.show()
 
     def generate_latex_table(self):
         if not self._has_run:

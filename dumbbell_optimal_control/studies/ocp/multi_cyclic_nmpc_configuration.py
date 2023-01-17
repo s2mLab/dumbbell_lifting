@@ -24,6 +24,7 @@ class MultiCyclicNmpcConfiguration(OcpConfiguration):
         n_round_trips_to_advance,
         n_total_round_trips,
         round_trip_time: float,
+        stop_if_fail: bool,
         x0: tuple[float, ...],
         tau_limits: tuple[float, float],
         dynamics: DynamicsFcn,
@@ -37,6 +38,7 @@ class MultiCyclicNmpcConfiguration(OcpConfiguration):
     ):
         self.n_round_trips_to_advance = n_round_trips_to_advance
         self.n_total_round_trips = n_total_round_trips
+        self.stop_if_fail = stop_if_fail
         super(MultiCyclicNmpcConfiguration, self).__init__(
             name=name,
             model_path=model_path,
@@ -92,6 +94,8 @@ class MultiCyclicNmpcConfiguration(OcpConfiguration):
             solver=self.solver,
             cyclic_options=cyclic_options,
             get_all_iterations=True,
+            get_cycles=True,
+            max_consecutive_failing=1 if self.stop_if_fail else 0,
         )
 
     @staticmethod

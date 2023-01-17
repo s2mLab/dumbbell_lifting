@@ -91,55 +91,55 @@ class ProgramsFcn:
             else:
                 return MX(0)
 
-        # constraints.add(TL_plus_mf_inf_one_plus, min_bound=0,  max_bound=1, node=Node.ALL)
-        # constraints.add(TL_plus_mf_inf_one_minus, min_bound=0, max_bound=1, node=Node.ALL)
+        constraints.add(TL_plus_mf_inf_one_plus, min_bound=0,  max_bound=1, node=Node.ALL)
+        constraints.add(TL_plus_mf_inf_one_minus, min_bound=0, max_bound=1, node=Node.ALL)
 
         # TEST DMADT - MR * 100 <=0
 
-        def dmadt_plus(all_pn) -> MX:
-            """
-
-            Parameters
-            ----------
-            all_pn: PenaltyNodeList
-                The penalty node elements
-           """
-            if all_pn.nlp.u_bounds.max[0, 1] != 0:
-                return MX(-1)
-                # otherwise, this one is not used...
-            else:
-                idx = all_pn.nlp.states["tau_plus_ma"].index
-                # return if_else(all_pn.nlp.states["tau_plus_mr"].cx < 0.01, all_pn.nlp.dynamics_func(
-                #     all_pn.nlp.states.cx,
-                #     all_pn.nlp.controls.cx,
-                #     all_pn.nlp.parameters.cx
-                # )[idx], MX(-1))
-                return all_pn.nlp.dynamics_func(
-                    all_pn.nlp.states.cx,
-                    all_pn.nlp.controls.cx,
-                    all_pn.nlp.parameters.cx
-                )[idx] - 1 * all_pn.nlp.states["tau_plus_mr"].cx
-
-        def dmadt_minus(all_pn) -> MX:
-            """
-
-            Parameters
-            ----------
-            all_pn: PenaltyNodeList
-                The penalty node elements
-            """
-
-            if all_pn.nlp.u_bounds.min[0, 1] != 0:
-                return all_pn.nlp.dynamics_func(
-                    all_pn.nlp.states.cx,
-                    all_pn.nlp.controls.cx,
-                    all_pn.nlp.parameters.cx
-                )[all_pn.nlp.states["tau_minus_ma"].index] - 1 * all_pn.nlp.states["tau_minus_mr"].cx
-            else:
-                return MX(-1)
-
-        constraints.add(dmadt_plus, min_bound=-1e8, max_bound=0, node=Node.ALL)
-        constraints.add(dmadt_minus, min_bound=-1e8, max_bound=0, node=Node.ALL)
+        # def dmadt_plus(all_pn) -> MX:
+        #     """
+        #
+        #     Parameters
+        #     ----------
+        #     all_pn: PenaltyNodeList
+        #         The penalty node elements
+        #    """
+        #     if all_pn.nlp.u_bounds.max[0, 1] != 0:
+        #         return MX(-1)
+        #         # otherwise, this one is not used...
+        #     else:
+        #         idx = all_pn.nlp.states["tau_plus_ma"].index
+        #         # return if_else(all_pn.nlp.states["tau_plus_mr"].cx < 0.01, all_pn.nlp.dynamics_func(
+        #         #     all_pn.nlp.states.cx,
+        #         #     all_pn.nlp.controls.cx,
+        #         #     all_pn.nlp.parameters.cx
+        #         # )[idx], MX(-1))
+        #         return all_pn.nlp.dynamics_func(
+        #             all_pn.nlp.states.cx,
+        #             all_pn.nlp.controls.cx,
+        #             all_pn.nlp.parameters.cx
+        #         )[idx] - 1 * all_pn.nlp.states["tau_plus_mr"].cx
+        #
+        # def dmadt_minus(all_pn) -> MX:
+        #     """
+        #
+        #     Parameters
+        #     ----------
+        #     all_pn: PenaltyNodeList
+        #         The penalty node elements
+        #     """
+        #
+        #     if all_pn.nlp.u_bounds.min[0, 1] != 0:
+        #         return all_pn.nlp.dynamics_func(
+        #             all_pn.nlp.states.cx,
+        #             all_pn.nlp.controls.cx,
+        #             all_pn.nlp.parameters.cx
+        #         )[all_pn.nlp.states["tau_minus_ma"].index] - 1 * all_pn.nlp.states["tau_minus_mr"].cx
+        #     else:
+        #         return MX(-1)
+        #
+        # constraints.add(dmadt_plus, min_bound=-1e8, max_bound=0, node=Node.ALL)
+        # constraints.add(dmadt_minus, min_bound=-1e8, max_bound=0, node=Node.ALL)
 
         return r"$TauXia$", DynamicsFcn.TORQUE_DRIVEN, fatigue_model, objectives, constraints
 

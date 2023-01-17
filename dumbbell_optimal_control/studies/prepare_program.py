@@ -34,6 +34,7 @@ def get_nmpc(params: Program, study_setup: StudySetup):
         n_round_trips_to_advance=study_setup.n_round_trips_to_advance,
         n_total_round_trips=study_setup.n_total_round_trips,
         round_trip_time=study_setup.round_trip_time,
+        stop_if_fail=study_setup.stop_if_fail,
         x0=study_setup.x0,
         tau_limits=study_setup.tau_limits_no_muscles,
         dynamics=dynamics,
