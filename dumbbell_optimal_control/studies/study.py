@@ -41,17 +41,53 @@ class Study:
         self.solution[x][y] Condition x, if y is 0: then full solution, if y is 1: then a tuple of all windows OCP
         solutions, if y is 2: then a list of all cycle solution
     """
-    def __init__(self, conditions: Conditions):
-        self.name = conditions.name
+    def __init__(self, conditions: Conditions=None, solution=None):
+        self.name = conditions.name if conditions is not None else "debug"
         self._has_run: bool = False
         self._plots_are_prepared: bool = False
-        self.conditions: StudyConfiguration = conditions.value
-        self.solution: list[Solution, ...] | tuple[Solution, list[Solution, ...], list[Solution, ...]] = []
+        self.conditions: StudyConfiguration = conditions.value if conditions is not None else StudyConfiguration()
+        self.solution: list[Solution, ...] | tuple[Solution, list[Solution, ...], list[Solution, ...]] = [] if solution is None else solution
 
     def run(self):
         for condition in self.conditions.studies:
             self.solution.append(condition.perform())
         self._has_run = True
+        self._remove_failed_ocps()
+
+    def save(self):
+        """ export the study in a pickle file, with all attribute of the class"""
+        if not os.path.exists("results"):
+            os.mkdir("results")
+        np.save(f"results/{self.name}.npy", self.solution)
+
+    @classmethod
+    def load(cls, name: str):
+        """ load the study from a pickle file """
+        with open(f"results/{name}.npy", "rb") as f:
+            solution = np.load(f, allow_pickle=True)
+
+        return cls(solution=solution)
+
+    def _remove_failed_ocps(self):
+        for i, sol in enumerate(self.solution):
+            for j, sol_window in enumerate(sol[1]):
+                if sol_window.status == 1:
+                    self.solution[i][1].pop(j)
+            for i, sol_cycle in enumerate(sol[2]):
+                if sol_cycle.status == 1:
+                    self.solution[i][2].pop(i)
+
+    @staticmethod
+    def export_matplotlib_figure(fig, condition, name):
+        if not os.path.exists("results"):
+            os.mkdir("results")
+        if not os.path.exists(f"results/{condition}"):
+            os.mkdir(f"results/{condition}")
+        # in png, eps, pdf and svg
+        fig.savefig(f"results/{condition}/{name}.png", dpi=300, bbox_inches="tight")
+        fig.savefig(f"results/{condition}/{name}.eps", dpi=300, bbox_inches="tight")
+        fig.savefig(f"results/{condition}/{name}.pdf", dpi=300, bbox_inches="tight")
+        fig.savefig(f"results/{condition}/{name}.svg", dpi=300, bbox_inches="tight")
 
     def plot_data_stacked_per_window(self):
         color = ["b", "g", "r", "y", "m", "c", "k"]
@@ -244,9 +280,6 @@ class Study:
 
         plt.show()
 
-
-
-
     @staticmethod
     def compute_target_load(tau, tau_max):
         return tau / tau_max
@@ -256,43 +289,57 @@ class Study:
         return (1 - mf) * tau_max
 
     def plot_torques(self):
-        color = ["b", "g", "r", "y", "m", "c", "k"]
+        # two nice colors, red and green in a list, light.
+        color = ["#ff7f0e", "#2ca02c"]
+
         import matplotlib.pyplot as plt
 
         sol = self.solution[0][0]
         # subplot for each dof
         n_dof = sol.states['q'].shape[0]
         time = np.arange(0, len(sol.states["q"][0, :])) * self.solution[0][1][0].time[1]
-        fig, ax = plt.subplots(1, n_dof)
+        fig, ax = plt.subplots(n_dof, 1)
+        # figsize
+        fig.set_size_inches(8, 13)
 
         for i in range(n_dof):
-            ax[i].plot(time, sol.controls["tau_plus"][i, :], color=color[0], label="tau_plus")
-            tau_lim = self.compute_tau_limit(50, sol.states["tau_plus_mf"][i, :])
-            ax[i].plot(time, tau_lim, label="tau_lim", linestyle="--", color="k")
+            ax[i].plot(time, sol.controls["tau_plus"][i, :], color=color[0], label=r'$\tau^{+}$')
+            ax[i].plot(time, sol.controls["tau_minus"][i, :], color=color[1], label=r'$\tau^{-}$')
 
-            ax[i].plot(time, sol.controls["tau_minus"][i, :], color=color[1], label="tau_minus")
+            tau_lim = self.compute_tau_limit(50, sol.states["tau_plus_mf"][i, :])
+            ax[i].plot(time, tau_lim, label="maximal available torque", linestyle="--", color="k")
             tau_lim = self.compute_tau_limit(-50, sol.states["tau_minus_mf"][i, :])
             ax[i].plot(time, tau_lim, linestyle="--", color="k")
 
-            if i == 0:
-                ax[i].set_title(f"Shoulder")
-            elif i == 1:
-                ax[i].set_title(f"Elbow")
-
             ax[i].set_xlabel("Time (s)")
-        ax[0].set_ylabel("Torque (Nm)")
 
-        # plot a vertical line for each cycle
-        for i in range(1, len(self.solution[0][1])):
+            ax[i].spines["top"].set_visible(False)
+            ax[i].spines["right"].set_visible(False)
+
+        ax[0].set_ylabel("Torque (Nm)")
+        ax[0].set_title(f"Shoulder")
+        ax[0].set_ylabel("Torque (Nm)")
+        ax[1].set_title(f"Elbow")
+        # limits x axis
+        ax[0].set_xlim([0, self.solution[0][0].time[-1]])
+        ax[1].set_xlim([0, self.solution[0][0].time[-1]])
+
+        # grid on both ax color="lightgray", linestyle="--", linewidth=0.25)
+        for i in range(n_dof):
+            ax[i].grid(color="lightgray", linestyle="--", linewidth=0.25)
+
+        # compute cycles instants
+        cycle_final_time = self.solution[0][2][0].time[-1]
+        nb_cycles = int((self.solution[0][0].time[-1] + self.solution[0][0].time[1]) / self.solution[0][2][0].time[-1])
+
+        # plot vline each cycles for each dof
+        for i in range(1, nb_cycles):
             for j in range(n_dof):
-                for jj in range(2):
-                    n = self.conditions.studies[0].n_round_trips
-                    t_end = self.solution[0][1][0].time[-1]
-                    vline_x = [t_end/n * i for i in range(1, n+1)]
-                    for vline in vline_x:
-                        ax[j].axvline(x=vline, color="k", linestyle="--", linewidth=0.5)
+                vline_x = cycle_final_time * i
+                ax[j].axvline(x=vline_x, color="k", linestyle="--", linewidth=0.5)
 
         plt.legend()
+        self.export_matplotlib_figure(fig, self.name, "torques")
         plt.show()
 
     def plot_pools(self):
@@ -306,89 +353,74 @@ class Study:
 
         fig, ax = plt.subplots(2, n_dof)
         fig.set_size_inches(16, 9)
-
-        # plt.rcParams["text.usetex"] = True
-        plt.rcParams["text.latex.preamble"] = (r"\usepackage{siunitx}",)
-        plt.rcParams["font.family"] = "Times New Roman"
         font_size = 12
 
         for j in range(n_dof):
             for i, keys in enumerate(keys_set):
                 tau_key = "tau_plus" if i == 0 else "tau_minus"
                 tau_max = 50 if i == 0 else -50
-                ax[i, j].stackplot(time, np.vstack((sol.states[key][j, :] * 100 for key in keys)), colors=colors,
+                ax[i, j].stackplot(time, np.vstack([sol.states[key][j, :] * 100 for key in keys]), colors=colors,
                                    alpha=0.4)
                 ax[i, j].plot(time,
                               sol.controls[tau_key][j, :] * 100 / tau_max,
                               color="tab:blue",
-                              linewidth=4,
+                              linewidth=1.5,
                               )
-                ax[i, j].set_xlabel(r"Time (\SI{}{\second})", fontsize=font_size)
-                ax[i, j].set_ylabel(r"Level (\SI{}{\percent})", fontsize=font_size)
                 ax[i, j].set_ylim([0, 101])
                 ax[i, j].set_xlim([0, time[-1]])
                 ax[i, j].spines["top"].set_visible(False)
                 ax[i, j].spines["right"].set_visible(False)
                 ax[i, j].tick_params(axis="both", labelsize=font_size)
-                ax[i, j].legend()
 
-        # plot a vertical line for each cycle
-        for i in range(1, len(self.solution[0][1])):
-            for j in range(n_dof):
-                for jj in range(2):
-                    ax[jj, j].axvline(x=self.solution[0][1][0].time[-1] * (i+1), color="k", linestyle="--", alpha=0.5)
+        ax[0, 1].legend(
+            (
+                r"$m_a$",
+                r"$m_r$",
+                r"$m_f$",
+                r'$\tilde{\tau}^{+,-}$',
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                r"$TL$",
+            ),
+            loc="upper right",
+            fontsize=font_size,
+            framealpha=0.9,
+            title_fontsize=20,
+        )
 
-        ax[0, 0].set_title(r"Shoulder \tau_plus", fontsize=font_size)
-        ax[0, 1].set_title(r"Elbow \tau_plus", fontsize=font_size)
-        ax[1, 0].set_title(r"Shoulder \tau_minus", fontsize=font_size)
-        ax[1, 1].set_title(r"Elbow \tau_minus", fontsize=font_size)
-        # ax[i, j].legend(
-        #     (
-        #         "$m_a$",
-        #         "$m_r$",
-        #         "$m_f$",
-        #         "$m_a+m_r+m_f$",
-        #         "_",
-        #         "_",
-        #         "_",
-        #         "_",
-        #         "$TL$",
-        #         "_",
-        #         "_",
-        #         "_",
-        #         "_",
-        #         "_",
-        #         "_",
-        #         "_",
-        #         "_",
-        #         "_",
-        #         "_",
-        #         "_",
-        #         "$TL$",
-        #     ),
-        #     loc="upper right",
-        #     fontsize=font_size,
-        #     framealpha=0.9,
-        #     title_fontsize=20,
-        # )
+        ax[0, 0].set_title(r"Shoulder", fontsize=font_size)
+        ax[0, 1].set_title(r"Elbow", fontsize=font_size)
 
-        # plot a vertical line for each cycle
-        for i in range(1, len(self.solution[0][1])):
-            for j in range(n_dof):
-                for jj in range(2):
-                    n = self.conditions.studies[0].n_round_trips
-                    t_end = self.solution[0][1][0].time[-1]
-                    vline_x = [t_end / n * i for i in range(1, n + 1)]
-                    for vline in vline_x:
-                        ax[jj, j].axvline(x=vline, color="k", linestyle="--", linewidth=0.5, alpha=0.5)
+        ax[1, 0].set_xlabel('Time (s)', fontsize=font_size)
+        ax[1, 1].set_xlabel('Time (s)', fontsize=font_size)
+        ax[0, 0].set_ylabel('Flexion Level (%)', fontsize=font_size)
+        ax[1, 0].set_ylabel('Extension Level (%)', fontsize=font_size)
 
-        # if maximized:
-        #     plt.get_current_fig_manager().window.showMaximized()
+        # compute cycles instants
+        cycle_final_time = self.solution[0][2][0].time[-1]
+        nb_cycles = int((self.solution[0][0].time[-1] + self.solution[0][0].time[1]) / self.solution[0][2][0].time[-1])
 
-        # if self.study.plot_options.save_name:
-        #     plt.savefig(f"{self.prepare_and_get_results_dir()}/{self.study.plot_options.save_name}.png", dpi=100)
-        #     plt.savefig(f"{self.prepare_and_get_results_dir()}/{self.study.plot_options.save_name}.pdf", format="pdf")
-        #     plt.savefig(f"{self.prepare_and_get_results_dir()}/{self.study.plot_options.save_name}.eps", format="eps")
+        # plot vline each cycles for each dof
+        for j in range(n_dof):
+            for jj in range(2):
+                for i in range(1, nb_cycles):
+                    vline_x = cycle_final_time * i
+                    ax[j, jj].axvline(x=vline_x, color="k", linestyle="--", linewidth=0.5)
+
+        self.export_matplotlib_figure(fig,self.name, "pools")
 
         plt.show()
 
@@ -412,21 +444,53 @@ class Study:
         for i, sol in enumerate(solutions):
             sol.detailed_cost_values()
 
-        torque_cost = [sol.detailed_cost[0]["cost_value_weighted"] for sol in solutions]
-        tau_minus_mf_cost = [sol.detailed_cost[1]["cost_value_weighted"] for sol in solutions]
-        tau_plus_mf_cost = [sol.detailed_cost[2]["cost_value_weighted"] for sol in solutions]
-        shoulder_state_cost = [sol.detailed_cost[3]["cost_value_weighted"] for sol in solutions]
+        n_cost = len(solutions[0].detailed_cost)
+
+        if n_cost == 4:
+            torque_cost = [s.detailed_cost[0]["cost_value_weighted"] for s in solutions]
+            tau_minus_mf_cost = [s.detailed_cost[1]["cost_value_weighted"] for s in solutions]
+            tau_plus_mf_cost = [s.detailed_cost[2]["cost_value_weighted"] for s in solutions]
+            shoulder_state_cost = [s.detailed_cost[3]["cost_value_weighted"] for s in solutions]
+        elif n_cost == 3:
+            tau_minus_mf_cost = [s.detailed_cost[0]["cost_value_weighted"] for s in solutions]
+            tau_plus_mf_cost = [s.detailed_cost[1]["cost_value_weighted"] for s in solutions]
+            shoulder_state_cost = [s.detailed_cost[2]["cost_value_weighted"] for s in solutions]
+        elif n_cost == 2:
+            torque_cost = [s.detailed_cost[0]["cost_value_weighted"] for s in solutions]
+            shoulder_state_cost = [s.detailed_cost[1]["cost_value_weighted"] for s in solutions]
 
         plt.figure()
-        plt.plot(torque_cost, label="Torque cost", marker="o")
-        plt.plot(tau_minus_mf_cost, label="Tau minus cost", marker="o")
-        plt.plot(tau_plus_mf_cost, label="Tau plus cost", marker="o")
-        plt.plot(shoulder_state_cost, label="Shoulder state cost", marker="o")
+        if n_cost == 4 or n_cost == 2:
+            plt.plot(torque_cost, label=r'$\int \tau^2 \; dt$', marker="o", color="tab:blue")
+        if n_cost == 3 or n_cost == 4:
+            plt.plot(tau_minus_mf_cost, label=r'$\int {m_f^{-}}^2 \; dt$', marker="o", color="tab:orange")
+            plt.plot(tau_plus_mf_cost,  label=r'$\int {m_f^{+}}^2 \; dt$', marker="o", color="tab:red")
+        plt.plot(shoulder_state_cost, label=r'$\int q_0^2 \; dt$', marker="o", color="tab:green")
         # x-axis only show ticks for int
         plt.xticks(np.arange(len(solutions)), np.arange(1, len(solutions) + 1))
-        plt.xlabel("Cycle")
+        plt.xlabel("Window")
         plt.ylabel("Cost")
+        # y-axis log scale
+        plt.yscale("log")
+        # show grid in light gray
+        plt.grid(color="lightgray", linestyle="--", linewidth=0.25)
         plt.legend()
+        # get fig to export it
+        fig = plt.gcf()
+        self.export_matplotlib_figure(fig,self.name, "cost")
+        plt.show()
+
+    def plot_cpu_time(self):
+        cpu_time = [sol.real_time_to_optimize for sol in self.solution[0][1]]
+        plt.figure()
+        plt.plot(cpu_time, marker="o")
+        # x-axis only show ticks for int
+        plt.xticks(np.arange(len(cpu_time)), np.arange(1, len(cpu_time) + 1))
+        plt.grid(color="lightgray", linestyle="--", linewidth=0.25)
+        plt.xlabel("Window")
+        plt.ylabel("CPU time (s)")
+        fig = plt.gcf()
+        self.export_matplotlib_figure(fig,self.name, "cpu_time")
         plt.show()
 
     def generate_latex_table(self):

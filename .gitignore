@@ -133,7 +133,7 @@ dmypy.json
 # Do not version the results
 results/
 *.png
-
 *.eps
-
 *.ogv
+# play with the code
+sandbox/

@@ -94,54 +94,122 @@ class ProgramsFcn:
         constraints.add(TL_plus_mf_inf_one_plus, min_bound=0,  max_bound=1, node=Node.ALL)
         constraints.add(TL_plus_mf_inf_one_minus, min_bound=0, max_bound=1, node=Node.ALL)
 
-        # TEST DMADT - MR * 100 <=0
-
-        # def dmadt_plus(all_pn) -> MX:
-        #     """
-        #
-        #     Parameters
-        #     ----------
-        #     all_pn: PenaltyNodeList
-        #         The penalty node elements
-        #    """
-        #     if all_pn.nlp.u_bounds.max[0, 1] != 0:
-        #         return MX(-1)
-        #         # otherwise, this one is not used...
-        #     else:
-        #         idx = all_pn.nlp.states["tau_plus_ma"].index
-        #         # return if_else(all_pn.nlp.states["tau_plus_mr"].cx < 0.01, all_pn.nlp.dynamics_func(
-        #         #     all_pn.nlp.states.cx,
-        #         #     all_pn.nlp.controls.cx,
-        #         #     all_pn.nlp.parameters.cx
-        #         # )[idx], MX(-1))
-        #         return all_pn.nlp.dynamics_func(
-        #             all_pn.nlp.states.cx,
-        #             all_pn.nlp.controls.cx,
-        #             all_pn.nlp.parameters.cx
-        #         )[idx] - 1 * all_pn.nlp.states["tau_plus_mr"].cx
-        #
-        # def dmadt_minus(all_pn) -> MX:
-        #     """
-        #
-        #     Parameters
-        #     ----------
-        #     all_pn: PenaltyNodeList
-        #         The penalty node elements
-        #     """
-        #
-        #     if all_pn.nlp.u_bounds.min[0, 1] != 0:
-        #         return all_pn.nlp.dynamics_func(
-        #             all_pn.nlp.states.cx,
-        #             all_pn.nlp.controls.cx,
-        #             all_pn.nlp.parameters.cx
-        #         )[all_pn.nlp.states["tau_minus_ma"].index] - 1 * all_pn.nlp.states["tau_minus_mr"].cx
-        #     else:
-        #         return MX(-1)
-        #
-        # constraints.add(dmadt_plus, min_bound=-1e8, max_bound=0, node=Node.ALL)
-        # constraints.add(dmadt_minus, min_bound=-1e8, max_bound=0, node=Node.ALL)
-
         return r"$TauXia$", DynamicsFcn.TORQUE_DRIVEN, fatigue_model, objectives, constraints
+
+    @staticmethod
+    def torque_driven_xia_fatigue_only(study_setup: StudySetup):
+        fatigue_model = FatigueModels.XIA_STABILIZED(
+            FatigableStructure.JOINTS,
+            FatigueParameters(
+                scaling=study_setup.tau_limits_no_muscles[1],
+                split_controls=study_setup.split_controls,
+                apply_on_joint=False,
+            ),
+        )
+
+        objectives = ObjectiveList()
+
+        objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="tau_minus_mf", weight=study_setup.weight_fatigue)
+        objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="tau_plus_mf", weight=study_setup.weight_fatigue)
+
+        # Keep arm pointing down as much as possible
+        objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="q", index=0, weight=10_000)
+
+        # fatigue constraints
+        constraints = ConstraintList()
+
+        # torque max
+        tau_max = 50
+
+        def TL_plus_mf_inf_one_plus(all_pn) -> MX:
+            """
+
+            Parameters
+            ----------
+            all_pn: PenaltyNodeList
+                The penalty node elements
+           """
+
+            if all_pn.nlp.u_bounds.max[0, 1] != 0:
+                return MX(0)
+                # otherwise, this one is not used...
+            else:
+                return all_pn.nlp.controls["tau_plus"].cx / tau_max + all_pn.nlp.states["tau_plus_mf"].cx
+
+        def TL_plus_mf_inf_one_minus(all_pn) -> MX:
+            """
+
+            Parameters
+            ----------
+            all_pn: PenaltyNodeList
+                The penalty node elements
+           """
+            if all_pn.nlp.u_bounds.min[0, 1] != 0:
+                return all_pn.nlp.controls["tau_minus"].cx / - tau_max + all_pn.nlp.states["tau_minus_mf"].cx
+            else:
+                return MX(0)
+
+        constraints.add(TL_plus_mf_inf_one_plus, min_bound=0, max_bound=1, node=Node.ALL)
+        constraints.add(TL_plus_mf_inf_one_minus, min_bound=0, max_bound=1, node=Node.ALL)
+
+        return r"$TauXia_mf$", DynamicsFcn.TORQUE_DRIVEN, fatigue_model, objectives, constraints
+
+    @staticmethod
+    def torque_driven_xia_torque_only(study_setup: StudySetup):
+        fatigue_model = FatigueModels.XIA_STABILIZED(
+            FatigableStructure.JOINTS,
+            FatigueParameters(
+                scaling=study_setup.tau_limits_no_muscles[1],
+                split_controls=study_setup.split_controls,
+                apply_on_joint=False,
+            ),
+        )
+
+        objectives = ObjectiveList()
+
+        objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, key="tau", weight=1)
+
+        # Keep arm pointing down as much as possible
+        objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="q", index=0, weight=10_000)
+
+        # fatigue constraints
+        constraints = ConstraintList()
+
+        # torque max
+        tau_max = 50
+
+        def TL_plus_mf_inf_one_plus(all_pn) -> MX:
+            """
+
+            Parameters
+            ----------
+            all_pn: PenaltyNodeList
+                The penalty node elements
+           """
+
+            if all_pn.nlp.u_bounds.max[0, 1] != 0:
+                return MX(0)
+                # otherwise, this one is not used...
+            else:
+                return all_pn.nlp.controls["tau_plus"].cx / tau_max + all_pn.nlp.states["tau_plus_mf"].cx
+
+        def TL_plus_mf_inf_one_minus(all_pn) -> MX:
+            """
+
+            Parameters
+            ----------
+            all_pn: PenaltyNodeList
+                The penalty node elements
+           """
+            if all_pn.nlp.u_bounds.min[0, 1] != 0:
+                return all_pn.nlp.controls["tau_minus"].cx / - tau_max + all_pn.nlp.states["tau_minus_mf"].cx
+            else:
+                return MX(0)
+
+        constraints.add(TL_plus_mf_inf_one_plus, min_bound=0, max_bound=1, node=Node.ALL)
+        constraints.add(TL_plus_mf_inf_one_minus, min_bound=0, max_bound=1, node=Node.ALL)
+
+        return r"$TauXia_mf$", DynamicsFcn.TORQUE_DRIVEN, fatigue_model, objectives, constraints
 
     @staticmethod
     def muscle_driven_xia(study_setup: StudySetup):
@@ -164,4 +232,6 @@ class Program(Enum):
     TORQUE_DRIVEN_NO_FATIGUE = (ProgramsFcn.torque_driven_no_fatigue, )
     MUSCLE_DRIVEN_NO_FATIGUE = (ProgramsFcn.muscles_driven_no_fatigue, )
     TORQUE_DRIVEN_XIA = (ProgramsFcn.torque_driven_xia, )
+    TORQUE_DRIVEN_XIA_FATIGUE_ONLY = (ProgramsFcn.torque_driven_xia_fatigue_only,)
+    TORQUE_DRIVEN_XIA_TORQUE_ONLY = (ProgramsFcn.torque_driven_xia_torque_only,)
     MUSCLE_DRIVEN_XIA = (ProgramsFcn.muscle_driven_xia, )
