@@ -3,11 +3,12 @@ from studies import Study
 
 
 def main():
-    all_studies = (
-        # Study(Conditions.CONDITIONS),
-        Study(Conditions.CONDITIONS_ONLY_FATIGUE),
-        # Study(Conditions.CONDITIONS_ONLY_TORQUE),
-              )
+    # all_studies = (
+    #     Study(Conditions.CONDITIONS),
+    #     Study(Conditions.CONDITIONS_ONLY_FATIGUE),
+    #     Study(Conditions.CONDITIONS_ONLY_TORQUE),
+    #           )
+    all_studies = (Study(Conditions.FULL_WINDOW),)
     # all_studies = (Study(Conditions.CONDITIONS_2),)
     # all_studies = (Study(Conditions.CONDITIONS_3),)
     # all_studies = (Study(Conditions.DEBUG_FAST),)
@@ -25,7 +26,7 @@ def main():
         # study.plot_data_stacked_per_window()
         study.plot_cpu_time()
         study.plot_cost()
-        study.plot_torques()
+        # study.plot_torques()
         study.plot_pools()
         # study.plot_data_stacked_per_cycle()
         # study.plot_first_and_last_cycles()

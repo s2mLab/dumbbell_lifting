@@ -74,8 +74,8 @@ class MultiCyclicNmpcConfiguration(OcpConfiguration):
             use_sx=isinstance(self.solver, Solver.ACADOS),
             n_threads=self.n_threads,
         )
-        # from bioptim import CostType
-        # self.ocp.add_plot_penalty(CostType.ALL)
+        from bioptim import CostType
+        self.ocp.add_plot_penalty(CostType.ALL)
 
     def perform(self) -> tuple[Solution, list[Solution, ...]]:
         """

@@ -56,6 +56,10 @@ class ProgramsFcn:
 
         # Keep arm pointing down as much as possible
         objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="q", index=0, weight=10_000)
+        # # regularization on qdot
+        # objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="qdot", weight=0.001)
+        # # regularization on tau
+        objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, key="tau", weight=0.1, derivative=True)
 
         # fatigue constraints
         constraints = ConstraintList()
@@ -114,6 +118,10 @@ class ProgramsFcn:
 
         # Keep arm pointing down as much as possible
         objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="q", index=0, weight=10_000)
+        # regularization on qdot
+        # objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="qdot", weight=0.001)
+        # # regularization on tau
+        objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, key="tau", weight=0.1, derivative=True)
 
         # fatigue constraints
         constraints = ConstraintList()
@@ -171,6 +179,10 @@ class ProgramsFcn:
 
         # Keep arm pointing down as much as possible
         objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="q", index=0, weight=10_000)
+        # regularization on qdot
+        # objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="qdot", weight=0.001)
+        # # regularization on tau
+        objectives.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, key="tau", weight=0.1, derivative=True)
 
         # fatigue constraints
         constraints = ConstraintList()

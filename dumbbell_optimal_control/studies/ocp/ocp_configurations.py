@@ -72,14 +72,23 @@ class OcpConfiguration:
         lower_target = 15 * np.pi / 180
         upper_target = 150 * np.pi / 180
         self.constraints = constraints
-        for i in range(self.n_round_trips * 2 + 1):  # +1 for finishing down
-            self.constraints.add(
-                ConstraintFcn.TRACK_STATE,
-                index=1,
-                target=lower_target if i % 2 == 0 else upper_target,
-                key="q",
-                node=(self.n_shoot_per_round_trip * self.n_round_trips * i) // (self.n_round_trips * 2),
-            )
+        for i in range(self.n_round_trips * 2 + 1):
+            if i == self.n_round_trips * 2:
+                self.constraints.add(
+                    ConstraintFcn.TRACK_STATE,
+                    index=1,
+                    target=lower_target if i % 2 == 0 else upper_target,
+                    key="q",
+                    node=(self.n_shoot_per_round_trip * self.n_round_trips * i) // (self.n_round_trips * 2) - 1,
+                )
+            else:
+                self.constraints.add(
+                    ConstraintFcn.TRACK_STATE,
+                    index=1,
+                    target=lower_target if i % 2 == 0 else upper_target,
+                    key="q",
+                    node=(self.n_shoot_per_round_trip * self.n_round_trips * i) // (self.n_round_trips * 2),
+                )
 
         # Initializing dynamics
         self.fatigue = FatigueList()

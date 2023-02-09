@@ -1,6 +1,6 @@
 from enum import Enum
 
-from studies import StudyConfiguration, PlotOptions, StudySetup, get_nmpc, Program
+from studies import StudyConfiguration, PlotOptions, StudySetup, get_nmpc, Program, get_ocp
 
 
 class Conditions(Enum):
@@ -108,6 +108,31 @@ class Conditions(Enum):
                          n_round_trips_to_advance=1,
                          n_round_trips=3,
                          n_total_round_trips=60,
+                         split_controls=True,
+                     ), ),
+        ),
+        rmse_index=None,
+        plot_options=PlotOptions(
+            title="Fast debugger",
+            legend_indices=None,
+            options=(
+                {"linestyle": "-"},
+                {"linestyle": "--"},
+                {"linestyle": "-"},
+                {"linestyle": "--"},
+                {"linestyle": "-"},
+            ),
+            to_degrees=True,
+        ),
+    )
+
+    FULL_WINDOW = StudyConfiguration(
+        studies=(
+            get_ocp(Program.TORQUE_DRIVEN_XIA,
+                     StudySetup(
+                         round_trip_time=1,
+                         n_shoot_per_round_trip=50,
+                         n_round_trips=32,
                          split_controls=True,
                      ), ),
         ),

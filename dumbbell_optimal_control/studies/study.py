@@ -70,12 +70,13 @@ class Study:
 
     def _remove_failed_ocps(self):
         for i, sol in enumerate(self.solution):
-            for j, sol_window in enumerate(sol[1]):
-                if sol_window.status == 1:
-                    self.solution[i][1].pop(j)
-            for i, sol_cycle in enumerate(sol[2]):
-                if sol_cycle.status == 1:
-                    self.solution[i][2].pop(i)
+            if isinstance(sol, list):
+                for j, sol_window in enumerate(sol[1]):
+                    if sol_window.status == 1:
+                        self.solution[i][1].pop(j)
+                for i, sol_cycle in enumerate(sol[2]):
+                    if sol_cycle.status == 1:
+                        self.solution[i][2].pop(i)
 
     @staticmethod
     def export_matplotlib_figure(fig, condition, name):
@@ -294,10 +295,12 @@ class Study:
 
         import matplotlib.pyplot as plt
 
-        sol = self.solution[0][0]
+        sol = self.solution[0][0] if isinstance(self.solution[0], list) else self.solution[0]
         # subplot for each dof
         n_dof = sol.states['q'].shape[0]
-        time = np.arange(0, len(sol.states["q"][0, :])) * self.solution[0][1][0].time[1]
+        time = np.arange(0, len(sol.states["q"][0, :])) * self.solution[0][1][0].time[1] if isinstance(self.solution[0],
+                                                                                                       list) else np.array(
+            sol.time, dtype=float)
         fig, ax = plt.subplots(n_dof, 1)
         # figsize
         fig.set_size_inches(8, 13)
@@ -328,28 +331,30 @@ class Study:
         for i in range(n_dof):
             ax[i].grid(color="lightgray", linestyle="--", linewidth=0.25)
 
-        # compute cycles instants
-        cycle_final_time = self.solution[0][2][0].time[-1]
-        nb_cycles = int((self.solution[0][0].time[-1] + self.solution[0][0].time[1]) / self.solution[0][2][0].time[-1])
+        if isinstance(self.solution[0], list):
+            # compute cycles instants
+            cycle_final_time = self.solution[0][2][0].time[-1]
+            nb_cycles = int((self.solution[0][0].time[-1] + self.solution[0][0].time[1]) / self.solution[0][2][0].time[-1])
 
-        # plot vline each cycles for each dof
-        for i in range(1, nb_cycles):
-            for j in range(n_dof):
-                vline_x = cycle_final_time * i
-                ax[j].axvline(x=vline_x, color="k", linestyle="--", linewidth=0.5)
+            # plot vline each cycles for each dof
+            for i in range(1, nb_cycles):
+                for j in range(n_dof):
+                    vline_x = cycle_final_time * i
+                    ax[j].axvline(x=vline_x, color="k", linestyle="--", linewidth=0.5)
 
         plt.legend()
         self.export_matplotlib_figure(fig, self.name, "torques")
         plt.show()
 
     def plot_pools(self):
-        sol = self.solution[0][0]
+        sol = self.solution[0][0] if isinstance(self.solution[0], list) else self.solution[0]
         keys_set = [["tau_plus_ma", "tau_plus_mr", "tau_plus_mf"],
                     ["tau_minus_ma", "tau_minus_mr", "tau_minus_mf"]]
         n_dof = sol.states['q'].shape[0]
 
         colors = (CustomColor.Green, CustomColor.Yellow, CustomColor.Red)
-        time = np.arange(0, len(sol.states["q"][0, :])) * self.solution[0][1][0].time[1]
+        time = np.arange(0, len(sol.states["q"][0, :])) * self.solution[0][1][0].time[1] if isinstance(self.solution[0],
+                                                                                                    list) else np.array(sol.time, dtype=float)
 
         fig, ax = plt.subplots(2, n_dof)
         fig.set_size_inches(16, 9)
@@ -406,19 +411,20 @@ class Study:
 
         ax[1, 0].set_xlabel('Time (s)', fontsize=font_size)
         ax[1, 1].set_xlabel('Time (s)', fontsize=font_size)
-        ax[0, 0].set_ylabel('Flexion Level (%)', fontsize=font_size)
-        ax[1, 0].set_ylabel('Extension Level (%)', fontsize=font_size)
+        ax[0, 0].set_ylabel('Flexion Actuation Level (%)', fontsize=font_size)
+        ax[1, 0].set_ylabel('Extension Actuation Level (%)', fontsize=font_size)
 
-        # compute cycles instants
-        cycle_final_time = self.solution[0][2][0].time[-1]
-        nb_cycles = int((self.solution[0][0].time[-1] + self.solution[0][0].time[1]) / self.solution[0][2][0].time[-1])
+        if isinstance(self.solution[0], list):
+            # compute cycles instants
+            cycle_final_time = self.solution[0][2][0].time[-1]
+            nb_cycles = int((self.solution[0][0].time[-1] + self.solution[0][0].time[1]) / self.solution[0][2][0].time[-1])
 
-        # plot vline each cycles for each dof
-        for j in range(n_dof):
-            for jj in range(2):
-                for i in range(1, nb_cycles):
-                    vline_x = cycle_final_time * i
-                    ax[j, jj].axvline(x=vline_x, color="k", linestyle="--", linewidth=0.5)
+            # plot vline each cycles for each dof
+            for j in range(n_dof):
+                for jj in range(2):
+                    for i in range(1, nb_cycles):
+                        vline_x = cycle_final_time * i
+                        ax[j, jj].axvline(x=vline_x, color="k", linestyle="--", linewidth=0.5)
 
         self.export_matplotlib_figure(fig,self.name, "pools")
 
@@ -439,35 +445,48 @@ class Study:
 
     def plot_cost(self):
 
-        solutions = self.solution[0][1]
+        solutions = self.solution[0][1] if isinstance(self.solution[0], list) else self.solution[0]
 
-        for i, sol in enumerate(solutions):
-            sol.detailed_cost_values()
+        if isinstance(solutions, list):
+            for i, sol in enumerate(solutions):
+                sol.detailed_cost_values()
+        else:
+            solutions.detailed_cost_values()
 
-        n_cost = len(solutions[0].detailed_cost)
+        n_cost = len(solutions[0].detailed_cost) if isinstance(solutions, list) else len(solutions.detailed_cost)
 
-        if n_cost == 4:
-            torque_cost = [s.detailed_cost[0]["cost_value_weighted"] for s in solutions]
-            tau_minus_mf_cost = [s.detailed_cost[1]["cost_value_weighted"] for s in solutions]
-            tau_plus_mf_cost = [s.detailed_cost[2]["cost_value_weighted"] for s in solutions]
-            shoulder_state_cost = [s.detailed_cost[3]["cost_value_weighted"] for s in solutions]
+        # if n_cost == 4:
+        if n_cost == 5:
+            torque_cost = [s.detailed_cost[0]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[0]["cost_value_weighted"]
+            tau_minus_mf_cost = [s.detailed_cost[1]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[1]["cost_value_weighted"]
+            tau_plus_mf_cost = [s.detailed_cost[2]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[2]["cost_value_weighted"]
+            shoulder_state_cost = [s.detailed_cost[3]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[3]["cost_value_weighted"]
+            torque_derivative_cost = [s.detailed_cost[4]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[4]["cost_value_weighted"]
+        # elif n_cost == 3:
+        elif n_cost == 4:
+            tau_minus_mf_cost = [s.detailed_cost[0]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[0]["cost_value_weighted"]
+            tau_plus_mf_cost = [s.detailed_cost[1]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[1]["cost_value_weighted"]
+            shoulder_state_cost = [s.detailed_cost[2]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[2]["cost_value_weighted"]
+            torque_derivative_cost = [s.detailed_cost[3]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[3]["cost_value_weighted"]
+        # elif n_cost == 2:
         elif n_cost == 3:
-            tau_minus_mf_cost = [s.detailed_cost[0]["cost_value_weighted"] for s in solutions]
-            tau_plus_mf_cost = [s.detailed_cost[1]["cost_value_weighted"] for s in solutions]
-            shoulder_state_cost = [s.detailed_cost[2]["cost_value_weighted"] for s in solutions]
-        elif n_cost == 2:
-            torque_cost = [s.detailed_cost[0]["cost_value_weighted"] for s in solutions]
-            shoulder_state_cost = [s.detailed_cost[1]["cost_value_weighted"] for s in solutions]
+            torque_cost = [s.detailed_cost[0]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[0]["cost_value_weighted"]
+            shoulder_state_cost = [s.detailed_cost[1]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[1]["cost_value_weighted"]
+            torque_derivative_cost = [s.detailed_cost[2]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[2]["cost_value_weighted"]
 
         plt.figure()
-        if n_cost == 4 or n_cost == 2:
+        # if n_cost == 4 or n_cost == 2:
+        if n_cost == 5 or n_cost == 3:
             plt.plot(torque_cost, label=r'$\int \tau^2 \; dt$', marker="o", color="tab:blue")
-        if n_cost == 3 or n_cost == 4:
+        # if n_cost == 3 or n_cost == 4:
+        if n_cost == 4 or n_cost == 5:
             plt.plot(tau_minus_mf_cost, label=r'$\int {m_f^{-}}^2 \; dt$', marker="o", color="tab:orange")
             plt.plot(tau_plus_mf_cost,  label=r'$\int {m_f^{+}}^2 \; dt$', marker="o", color="tab:red")
         plt.plot(shoulder_state_cost, label=r'$\int q_0^2 \; dt$', marker="o", color="tab:green")
+        plt.plot(torque_derivative_cost, label=r'$\int {\delta \tau}^2 \; dt$', marker="o", color="tab:brown")
         # x-axis only show ticks for int
-        plt.xticks(np.arange(len(solutions)), np.arange(1, len(solutions) + 1))
+        if isinstance(solutions, list):
+            plt.xticks(np.arange(len(solutions)), np.arange(1, len(solutions) + 1))
         plt.xlabel("Window")
         plt.ylabel("Cost")
         # y-axis log scale
@@ -477,11 +496,12 @@ class Study:
         plt.legend()
         # get fig to export it
         fig = plt.gcf()
-        self.export_matplotlib_figure(fig,self.name, "cost")
+        self.export_matplotlib_figure(fig, self.name, "cost")
         plt.show()
 
     def plot_cpu_time(self):
-        cpu_time = [sol.real_time_to_optimize for sol in self.solution[0][1]]
+        solutions = self.solution[0][1] if isinstance(self.solution[0], list) else self.solution[0]
+        cpu_time = [sol.real_time_to_optimize for sol in solutions] if isinstance(solutions, list) else [solutions.real_time_to_optimize]
         plt.figure()
         plt.plot(cpu_time, marker="o")
         # x-axis only show ticks for int
