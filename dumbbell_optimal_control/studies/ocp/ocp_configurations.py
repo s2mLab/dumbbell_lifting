@@ -6,7 +6,6 @@ from bioptim import (
     ObjectiveList,
     ConstraintList,
     ConstraintFcn,
-    QAndQDotBounds,
     FatigueBounds,
     Bounds,
     VariableType,
@@ -114,7 +113,7 @@ class OcpConfiguration:
             raise NotImplementedError("Dynamics not implemented yet")
 
         # Initialize path constraints and initial guesses for x
-        self.x_bounds = QAndQDotBounds(self.model)
+        self.x_bounds = self.model.bounds_from_ranges(["q", "qdot"])
         self.x_bounds[:, 0] = x0
         self.x_bounds[self.n_q :, -1] = 0  # Final velocities are null
         self.x_bounds.concatenate(FatigueBounds(self.fatigue, fix_first_frame=True))
