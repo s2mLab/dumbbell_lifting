@@ -7,6 +7,7 @@ from bioptim import (
     ObjectiveList,
     ConstraintList,
     Solver,
+    MultiCyclicCycleSolutions,
 )
 
 from .enums import DynamicsFcn
@@ -37,7 +38,7 @@ class MultiCyclicNmpcConfiguration(OcpConfiguration):
         n_threads: int = 8,
     ):
         self.n_round_trips_to_advance = n_round_trips_to_advance
-        self.n_total_round_trips = n_total_round_trips
+        self.n_total_round_trips_optimized = n_total_round_trips
         self.stop_if_fail = stop_if_fail
         super(MultiCyclicNmpcConfiguration, self).__init__(
             name=name,
@@ -73,6 +74,8 @@ class MultiCyclicNmpcConfiguration(OcpConfiguration):
             constraints=self.constraints,
             use_sx=isinstance(self.solver, Solver.ACADOS),
             n_threads=self.n_threads,
+            # assume_phase_dynamics=True,
+            assume_phase_dynamics=False,
         )
         from bioptim import CostType
         self.ocp.add_plot_penalty(CostType.ALL)
@@ -90,17 +93,17 @@ class MultiCyclicNmpcConfiguration(OcpConfiguration):
         cyclic_options = {"states": ["q", "qdot"]}
 
         return self.ocp.solve(
-            update_function=lambda ocp, t, sol: self.nmpc_update_function(ocp, t, sol, self.n_total_round_trips),
+            update_function=lambda ocp, t, sol: self.nmpc_update_function(ocp, t, sol, self.n_total_round_trips_optimized),
             solver=self.solver,
             cyclic_options=cyclic_options,
             get_all_iterations=True,
-            get_cycles=True,
+            cycle_solutions=MultiCyclicCycleSolutions.ALL_CYCLES,
             max_consecutive_failing=1 if self.stop_if_fail else 0,
         )
 
     @staticmethod
-    def nmpc_update_function(ocp, t, sol, n_cycles_total):
-        if t >= n_cycles_total:
+    def nmpc_update_function(ocp, t, sol, n_cycles_total_optimized):
+        if t > (n_cycles_total_optimized - ocp.n_cycles):
             print("Finished optimizing!")
             return False
 

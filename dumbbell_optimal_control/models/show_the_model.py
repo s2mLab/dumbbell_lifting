@@ -15,8 +15,9 @@ show_mass_center = False if export_model else True
 show_global_center_of_mass = False if export_model else True
 show_segments_center_of_mass = False if export_model else True
 
-model_name = "arm26.bioMod"
-biorbd_viz = bioviz.Viz(
+# model_name = "arm26.bioMod"
+model_name = "arm26_viz.bioMod" # this model was only used to display the results because it included more meshfiles.
+b = bioviz.Viz(
     model_name,
     show_gravity_vector=show_gravity_vector,
     show_floor=show_floor,
@@ -29,8 +30,17 @@ biorbd_viz = bioviz.Viz(
     mesh_opacity=1,
     background_color=background_color,
 )
-biorbd_viz.set_camera_position(-0.5, 3.5922578781963685, 0.1)
-biorbd_viz.resize(1000, 1000)
+b.set_camera_position(-0.5, 3.5922578781963685, 0.1)
+b.resize(1000, 1000)
 if export_model:
-    biorbd_viz.snapshot("doc/model.png")
-biorbd_viz.exec()
+    b.snapshot("doc/model.png")
+b.exec()
+
+print("roll")
+print(b.get_camera_roll())
+print("zoom")
+print(b.get_camera_zoom())
+print("position")
+print(b.get_camera_position())
+print("get_camera_focus_point")
+print(b.get_camera_focus_point())

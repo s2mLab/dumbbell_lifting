@@ -81,8 +81,8 @@ class FatigueIntegrator:
     def plot_results(self, font_size: int = 20, maximized: bool = False):
         fig = plt.figure()
         fig.set_size_inches(16, 9)
-        # plt.rcParams["text.usetex"] = True
-        plt.rcParams["text.latex.preamble"] = (r"\usepackage{siunitx}",)
+        plt.rcParams["text.usetex"] = True
+        # plt.rcParams["text.latex.preamble"] = (r"\usepackage{siunitx}",)
         plt.rcParams["font.family"] = "Times New Roman"
         self.axes = plt.axes()
 
@@ -104,8 +104,10 @@ class FatigueIntegrator:
         )
 
         self.axes.set_title(self.study.plot_options.title, fontsize=1.5 * font_size)
-        self.axes.set_xlabel(r"Time (\SI{}{\second})", fontsize=font_size)
-        self.axes.set_ylabel(r"Level (\SI{}{\percent})", fontsize=font_size)
+        # self.axes.set_xlabel(r"Time (\SI{}{\second})", fontsize=font_size)
+        # self.axes.set_ylabel(r"Level (\SI{}{\percent})", fontsize=font_size)
+        self.axes.set_xlabel(r"Time (s)", fontsize=font_size)
+        self.axes.set_ylabel(r"Level (\%)", fontsize=font_size)
         self.axes.set_xlim(self.study.plot_options.xlim)
         self.axes.set_ylim(self.study.plot_options.ylim)
         if not self.study.plot_options.keep_frame:
@@ -139,9 +141,10 @@ class FatigueIntegrator:
             plt.get_current_fig_manager().window.showMaximized()
 
         if self.study.plot_options.save_name:
+            # plt.show()
             plt.savefig(f"{self.prepare_and_get_results_dir()}/{self.study.plot_options.save_name}.png", dpi=100)
             plt.savefig(f"{self.prepare_and_get_results_dir()}/{self.study.plot_options.save_name}.pdf", format="pdf")
-            plt.savefig(f"{self.prepare_and_get_results_dir()}/{self.study.plot_options.save_name}.eps", format="eps")
+            plt.savefig(f"{self.prepare_and_get_results_dir()}/{self.study.plot_options.save_name}.eps", format="eps", dpi=100)
 
         plt.show()
 

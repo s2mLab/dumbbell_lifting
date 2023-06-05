@@ -4,6 +4,7 @@ import os
 from bioptim import Solution
 import numpy as np
 from matplotlib import pyplot as plt
+import pickle
 
 from .study_configuration import StudyConfiguration
 from .ocp import DataType
@@ -41,12 +42,15 @@ class Study:
         self.solution[x][y] Condition x, if y is 0: then full solution, if y is 1: then a tuple of all windows OCP
         solutions, if y is 2: then a list of all cycle solution
     """
-    def __init__(self, conditions: Conditions=None, solution=None):
+
+    def __init__(self, conditions: Conditions = None, solution=None, result_folder="results"):
         self.name = conditions.name if conditions is not None else "debug"
         self._has_run: bool = False
         self._plots_are_prepared: bool = False
         self.conditions: StudyConfiguration = conditions.value if conditions is not None else StudyConfiguration()
-        self.solution: list[Solution, ...] | tuple[Solution, list[Solution, ...], list[Solution, ...]] = [] if solution is None else solution
+        self.solution: list[Solution, ...] | tuple[
+            Solution, list[Solution, ...], list[Solution, ...]] = [] if solution is None else solution
+        self.result_folder = result_folder
 
     def run(self):
         for condition in self.conditions.studies:
@@ -55,20 +59,126 @@ class Study:
         self._remove_failed_ocps()
 
     def save(self):
-        """ export the study in a pickle file, with all attribute of the class"""
-        if not os.path.exists("results"):
-            os.mkdir("results")
-        np.save(f"results/{self.name}.npy", self.solution)
+        self._cycle_cost_computation()
+        self._time_to_optimize()
+        self._save_decision_variables()
 
-    @classmethod
-    def load(cls, name: str):
-        """ load the study from a pickle file """
-        with open(f"results/{name}.npy", "rb") as f:
-            solution = np.load(f, allow_pickle=True)
+    def _cycle_cost_computation(self):
+        """ compute the cost of each cycle for each condition and each cost function """
+        self.solution_costs = []
 
-        return cls(solution=solution)
+        for i, condition in enumerate(self.conditions.studies):
+            cycle_solutions = self.solution[i][2] if isinstance(self.solution[i], tuple) else self.solution
+
+            for j, sol in enumerate(cycle_solutions):
+                sol.print_cost()
+            cycle_costs = cycle_solutions[0].detailed_cost
+
+            has_torque_cost = False
+            has_tau_minus_mf_cost = False
+            has_tau_plus_mf_cost = False
+            has_shoulder_state_cost = False
+            for idx, cost in enumerate(cycle_costs):
+                if cost["name"] == "Lagrange.MINIMIZE_CONTROL" and cost["params"]["key"] == "tau" and cost[
+                    "derivative"] == False:
+                    has_torque_cost = True
+                    idx_torque_cost = idx
+                if cost["name"] == "Lagrange.MINIMIZE_STATE" and cost["params"]["key"] == "tau_minus_mf":
+                    has_tau_minus_mf_cost = True
+                    idx_tau_minus_mf_cost = idx
+                if cost["name"] == "Lagrange.MINIMIZE_STATE" and cost["params"]["key"] == "tau_plus_mf":
+                    has_tau_plus_mf_cost = True
+                    idx_tau_plus_mf_cost = idx
+                if cost["name"] == "Lagrange.MINIMIZE_STATE" and cost["params"]["key"] == "q":
+                    has_shoulder_state_cost = True
+                    idx_shoulder_state_cost = idx
+
+            self.solution_costs.append(dict(
+                condition_name=self.name + '_' + condition.name,
+                shoulder_state_cost=[s.detailed_cost[idx_shoulder_state_cost]["cost_value_weighted"] for s in
+                                     cycle_solutions] if has_shoulder_state_cost else None,
+                torque_cost=[s.detailed_cost[idx_torque_cost]["cost_value_weighted"] for s in
+                             cycle_solutions] if has_torque_cost else None,
+                tau_minus_mf_cost=[s.detailed_cost[idx_tau_minus_mf_cost]["cost_value_weighted"] for s in
+                                   cycle_solutions] if has_tau_minus_mf_cost else None,
+
+                tau_plus_mf_cost=[s.detailed_cost[idx_tau_plus_mf_cost]["cost_value_weighted"] for s in
+                                  cycle_solutions] if has_tau_plus_mf_cost else None,
+            )
+            )
+
+            if not os.path.exists(f"{self.result_folder}"):
+                os.mkdir(f"{self.result_folder}")
+            if not os.path.exists(f"{self.result_folder}/costs/"):
+                os.mkdir(f"{self.result_folder}/costs/")
+            import pandas as pd
+            pd.DataFrame(self.solution_costs[i]).to_csv(f"{self.result_folder}/costs/{self.name}_{condition.name}.csv")
+
+    def _time_to_optimize(self):
+        """ export the time to optimize of each cycle for each condition """
+        self.time_to_optimize = []
+
+        for i, condition in enumerate(self.conditions.studies):
+
+            ocp_solutions = self.solution[i][1]
+
+            self.time_to_optimize.append(dict(
+                condition_name=condition.name,
+                time=[s.real_time_to_optimize for s in
+                      ocp_solutions],
+            )
+            )
+            # save the cost in a numpy array
+            if not os.path.exists(f"{self.result_folder}"):
+                os.mkdir(f"{self.result_folder}")
+            if not os.path.exists(f"{self.result_folder}/time/"):
+                os.mkdir(f"{self.result_folder}/time/")
+            # Save dictionary to a CSV file
+            import pandas as pd
+            pd.DataFrame(self.time_to_optimize[i]).to_csv(f"{self.result_folder}/time/{self.name}_{condition.name}.csv")
+
+    def _save_decision_variables(self):
+        """ export the decision variables of each cycle for each condition """
+        self.full_ocp = []
+        self.windows = []
+        self.cycles = []
+
+        for i, condition in enumerate(self.conditions.studies):
+
+            self.full_ocp.append(dict(
+                condition_name=self.name + '_' + condition.name,
+                states=self.solution[i][0].states,
+                controls=self.solution[i][0].controls,
+                parameters=self.solution[i][0].parameters,
+                time=self.solution[i][0].time,
+            ))
+            self.windows.append(dict(
+                condition_name=self.name + '_' + condition.name,
+                states=[s.states for s in self.solution[i][1]],
+                controls=[s.controls for s in self.solution[i][1]],
+                parameters=[s.parameters for s in self.solution[i][1]],
+                time=[s.time for s in self.solution[i][1]],
+            ),
+            )
+            self.cycles.append(dict(
+                condition_name=self.name + '_' + condition.name,
+                states=[s.states for s in self.solution[i][2]],
+                controls=[s.controls for s in self.solution[i][2]],
+                parameters=[s.parameters for s in self.solution[i][2]],
+                time=[s.time for s in self.solution[i][2]],
+            )
+            )
+            if not os.path.exists(f"{self.result_folder}"):
+                os.mkdir(f"{self.result_folder}")
+            if not os.path.exists(f"{self.result_folder}/decision_variables/"):
+                os.mkdir(f"{self.result_folder}/decision_variables/")
+            # Save dictionary with pickle
+            data_to_save = (self.full_ocp[i], self.windows[i], self.cycles[i])
+            with open(f"{self.result_folder}/decision_variables/{self.name}_{condition.name}.pkl", "wb") as file:
+                pickle.dump(data_to_save, file)
 
     def _remove_failed_ocps(self):
+        """ remove all failed ocp from the solution list """
         for i, sol in enumerate(self.solution):
             if isinstance(sol, list):
                 for j, sol_window in enumerate(sol[1]):
@@ -79,16 +189,16 @@ class Study:
                         self.solution[i][2].pop(i)
 
     @staticmethod
-    def export_matplotlib_figure(fig, condition, name):
-        if not os.path.exists("results"):
-            os.mkdir("results")
-        if not os.path.exists(f"results/{condition}"):
-            os.mkdir(f"results/{condition}")
+    def export_matplotlib_figure(fig, condition, name, result_folder):
+        if not os.path.exists(result_folder):
+            os.mkdir(result_folder)
+        if not os.path.exists(f"{result_folder}/{condition}"):
+            os.mkdir(f"{result_folder}/{condition}")
         # in png, eps, pdf and svg
-        fig.savefig(f"results/{condition}/{name}.png", dpi=300, bbox_inches="tight")
-        fig.savefig(f"results/{condition}/{name}.eps", dpi=300, bbox_inches="tight")
-        fig.savefig(f"results/{condition}/{name}.pdf", dpi=300, bbox_inches="tight")
-        fig.savefig(f"results/{condition}/{name}.svg", dpi=300, bbox_inches="tight")
+        fig.savefig(f"{result_folder}/{condition}/{name}.png", dpi=300, bbox_inches="tight")
+        fig.savefig(f"{result_folder}/{condition}/{name}.eps", dpi=300, bbox_inches="tight")
+        fig.savefig(f"{result_folder}/{condition}/{name}.pdf", dpi=300, bbox_inches="tight")
+        fig.savefig(f"{result_folder}{condition}/{name}.svg", dpi=300, bbox_inches="tight")
 
     def plot_data_stacked_per_window(self):
         color = ["b", "g", "r", "y", "m", "c", "k"]
@@ -334,7 +444,8 @@ class Study:
         if isinstance(self.solution[0], list):
             # compute cycles instants
             cycle_final_time = self.solution[0][2][0].time[-1]
-            nb_cycles = int((self.solution[0][0].time[-1] + self.solution[0][0].time[1]) / self.solution[0][2][0].time[-1])
+            nb_cycles = int(
+                (self.solution[0][0].time[-1] + self.solution[0][0].time[1]) / self.solution[0][2][0].time[-1])
 
             # plot vline each cycles for each dof
             for i in range(1, nb_cycles):
@@ -346,15 +457,16 @@ class Study:
         self.export_matplotlib_figure(fig, self.name, "torques")
         plt.show()
 
-    def plot_pools(self):
-        sol = self.solution[0][0] if isinstance(self.solution[0], list) else self.solution[0]
+    def plot_pools(self, export: bool = False, show: bool = True):
+        sol = self.solution[0][0] if isinstance(self.solution[0], tuple) else self.solution[0]
         keys_set = [["tau_plus_ma", "tau_plus_mr", "tau_plus_mf"],
                     ["tau_minus_ma", "tau_minus_mr", "tau_minus_mf"]]
         n_dof = sol.states['q'].shape[0]
 
         colors = (CustomColor.Green, CustomColor.Yellow, CustomColor.Red)
         time = np.arange(0, len(sol.states["q"][0, :])) * self.solution[0][1][0].time[1] if isinstance(self.solution[0],
-                                                                                                    list) else np.array(sol.time, dtype=float)
+                                                                                                       list) else np.array(
+            sol.time, dtype=float)
 
         fig, ax = plt.subplots(2, n_dof)
         fig.set_size_inches(16, 9)
@@ -417,7 +529,8 @@ class Study:
         if isinstance(self.solution[0], list):
             # compute cycles instants
             cycle_final_time = self.solution[0][2][0].time[-1]
-            nb_cycles = int((self.solution[0][0].time[-1] + self.solution[0][0].time[1]) / self.solution[0][2][0].time[-1])
+            nb_cycles = int(
+                (self.solution[0][0].time[-1] + self.solution[0][0].time[1]) / self.solution[0][2][0].time[-1])
 
             # plot vline each cycles for each dof
             for j in range(n_dof):
@@ -426,9 +539,10 @@ class Study:
                         vline_x = cycle_final_time * i
                         ax[j, jj].axvline(x=vline_x, color="k", linestyle="--", linewidth=0.5)
 
-        self.export_matplotlib_figure(fig,self.name, "pools")
-
-        plt.show()
+        if export:
+            self.export_matplotlib_figure(fig, self.name, "pools")
+        if show:
+            plt.show()
 
     def print_results(self):
         print("Number of iterations")
@@ -457,22 +571,40 @@ class Study:
 
         # if n_cost == 4:
         if n_cost == 5:
-            torque_cost = [s.detailed_cost[0]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[0]["cost_value_weighted"]
-            tau_minus_mf_cost = [s.detailed_cost[1]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[1]["cost_value_weighted"]
-            tau_plus_mf_cost = [s.detailed_cost[2]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[2]["cost_value_weighted"]
-            shoulder_state_cost = [s.detailed_cost[3]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[3]["cost_value_weighted"]
-            torque_derivative_cost = [s.detailed_cost[4]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[4]["cost_value_weighted"]
+            torque_cost = [s.detailed_cost[0]["cost_value_weighted"] for s in solutions] if isinstance(solutions,
+                                                                                                       list) else \
+                solutions.detailed_cost[0]["cost_value_weighted"]
+            tau_minus_mf_cost = [s.detailed_cost[1]["cost_value_weighted"] for s in solutions] if isinstance(solutions,
+                                                                                                             list) else \
+                solutions.detailed_cost[1]["cost_value_weighted"]
+            tau_plus_mf_cost = [s.detailed_cost[2]["cost_value_weighted"] for s in solutions] if isinstance(solutions,
+                                                                                                            list) else \
+                solutions.detailed_cost[2]["cost_value_weighted"]
+            shoulder_state_cost = [s.detailed_cost[3]["cost_value_weighted"] for s in solutions] if isinstance(
+                solutions, list) else solutions.detailed_cost[3]["cost_value_weighted"]
+            torque_derivative_cost = [s.detailed_cost[4]["cost_value_weighted"] for s in solutions] if isinstance(
+                solutions, list) else solutions.detailed_cost[4]["cost_value_weighted"]
         # elif n_cost == 3:
         elif n_cost == 4:
-            tau_minus_mf_cost = [s.detailed_cost[0]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[0]["cost_value_weighted"]
-            tau_plus_mf_cost = [s.detailed_cost[1]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[1]["cost_value_weighted"]
-            shoulder_state_cost = [s.detailed_cost[2]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[2]["cost_value_weighted"]
-            torque_derivative_cost = [s.detailed_cost[3]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[3]["cost_value_weighted"]
+            tau_minus_mf_cost = [s.detailed_cost[0]["cost_value_weighted"] for s in solutions] if isinstance(solutions,
+                                                                                                             list) else \
+                solutions.detailed_cost[0]["cost_value_weighted"]
+            tau_plus_mf_cost = [s.detailed_cost[1]["cost_value_weighted"] for s in solutions] if isinstance(solutions,
+                                                                                                            list) else \
+                solutions.detailed_cost[1]["cost_value_weighted"]
+            shoulder_state_cost = [s.detailed_cost[2]["cost_value_weighted"] for s in solutions] if isinstance(
+                solutions, list) else solutions.detailed_cost[2]["cost_value_weighted"]
+            torque_derivative_cost = [s.detailed_cost[3]["cost_value_weighted"] for s in solutions] if isinstance(
+                solutions, list) else solutions.detailed_cost[3]["cost_value_weighted"]
         # elif n_cost == 2:
         elif n_cost == 3:
-            torque_cost = [s.detailed_cost[0]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[0]["cost_value_weighted"]
-            shoulder_state_cost = [s.detailed_cost[1]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[1]["cost_value_weighted"]
-            torque_derivative_cost = [s.detailed_cost[2]["cost_value_weighted"] for s in solutions] if isinstance(solutions, list) else solutions.detailed_cost[2]["cost_value_weighted"]
+            torque_cost = [s.detailed_cost[0]["cost_value_weighted"] for s in solutions] if isinstance(solutions,
+                                                                                                       list) else \
+                solutions.detailed_cost[0]["cost_value_weighted"]
+            shoulder_state_cost = [s.detailed_cost[1]["cost_value_weighted"] for s in solutions] if isinstance(
+                solutions, list) else solutions.detailed_cost[1]["cost_value_weighted"]
+            torque_derivative_cost = [s.detailed_cost[2]["cost_value_weighted"] for s in solutions] if isinstance(
+                solutions, list) else solutions.detailed_cost[2]["cost_value_weighted"]
 
         plt.figure()
         # if n_cost == 4 or n_cost == 2:
@@ -481,7 +613,77 @@ class Study:
         # if n_cost == 3 or n_cost == 4:
         if n_cost == 4 or n_cost == 5:
             plt.plot(tau_minus_mf_cost, label=r'$\int {m_f^{-}}^2 \; dt$', marker="o", color="tab:orange")
-            plt.plot(tau_plus_mf_cost,  label=r'$\int {m_f^{+}}^2 \; dt$', marker="o", color="tab:red")
+            plt.plot(tau_plus_mf_cost, label=r'$\int {m_f^{+}}^2 \; dt$', marker="o", color="tab:red")
+        plt.plot(shoulder_state_cost, label=r'$\int q_0^2 \; dt$', marker="o", color="tab:green")
+        plt.plot(torque_derivative_cost, label=r'$\int {\delta \tau}^2 \; dt$', marker="o", color="tab:brown")
+        # x-axis only show ticks for int
+        if isinstance(solutions, list):
+            plt.xticks(np.arange(len(solutions)), np.arange(1, len(solutions) + 1))
+        plt.xlabel("Window")
+        plt.ylabel("Cost")
+        # y-axis log scale
+        plt.yscale("log")
+        # show grid in light gray
+        plt.grid(color="lightgray", linestyle="--", linewidth=0.25)
+        plt.legend()
+        # get fig to export it
+        fig = plt.gcf()
+        self.export_matplotlib_figure(fig, self.name, "cost")
+        plt.show()
+
+    def plot_cycle_cost(self):
+        solutions = self.solution[0][2]
+
+        for i, sol in enumerate(solutions):
+            sol.detailed_cost_values()
+
+        n_cost = len(solutions[0].detailed_cost)
+
+        # if n_cost == 4:
+        if n_cost == 5:
+            torque_cost = [s.detailed_cost[0]["cost_value_weighted"] for s in solutions] if isinstance(solutions,
+                                                                                                       list) else \
+                solutions.detailed_cost[0]["cost_value_weighted"]
+            tau_minus_mf_cost = [s.detailed_cost[1]["cost_value_weighted"] for s in solutions] if isinstance(solutions,
+                                                                                                             list) else \
+                solutions.detailed_cost[1]["cost_value_weighted"]
+            tau_plus_mf_cost = [s.detailed_cost[2]["cost_value_weighted"] for s in solutions] if isinstance(solutions,
+                                                                                                            list) else \
+                solutions.detailed_cost[2]["cost_value_weighted"]
+            shoulder_state_cost = [s.detailed_cost[3]["cost_value_weighted"] for s in solutions] if isinstance(
+                solutions, list) else solutions.detailed_cost[3]["cost_value_weighted"]
+            torque_derivative_cost = [s.detailed_cost[4]["cost_value_weighted"] for s in solutions] if isinstance(
+                solutions, list) else solutions.detailed_cost[4]["cost_value_weighted"]
+        # elif n_cost == 3:
+        elif n_cost == 4:
+            tau_minus_mf_cost = [s.detailed_cost[0]["cost_value_weighted"] for s in solutions] if isinstance(solutions,
+                                                                                                             list) else \
+                solutions.detailed_cost[0]["cost_value_weighted"]
+            tau_plus_mf_cost = [s.detailed_cost[1]["cost_value_weighted"] for s in solutions] if isinstance(solutions,
+                                                                                                            list) else \
+                solutions.detailed_cost[1]["cost_value_weighted"]
+            shoulder_state_cost = [s.detailed_cost[2]["cost_value_weighted"] for s in solutions] if isinstance(
+                solutions, list) else solutions.detailed_cost[2]["cost_value_weighted"]
+            torque_derivative_cost = [s.detailed_cost[3]["cost_value_weighted"] for s in solutions] if isinstance(
+                solutions, list) else solutions.detailed_cost[3]["cost_value_weighted"]
+        # elif n_cost == 2:
+        elif n_cost == 3:
+            torque_cost = [s.detailed_cost[0]["cost_value_weighted"] for s in solutions] if isinstance(solutions,
+                                                                                                       list) else \
+                solutions.detailed_cost[0]["cost_value_weighted"]
+            shoulder_state_cost = [s.detailed_cost[1]["cost_value_weighted"] for s in solutions] if isinstance(
+                solutions, list) else solutions.detailed_cost[1]["cost_value_weighted"]
+            torque_derivative_cost = [s.detailed_cost[2]["cost_value_weighted"] for s in solutions] if isinstance(
+                solutions, list) else solutions.detailed_cost[2]["cost_value_weighted"]
+
+        plt.figure()
+        # if n_cost == 4 or n_cost == 2:
+        if n_cost == 5 or n_cost == 3:
+            plt.plot(torque_cost, label=r'$\int \tau^2 \; dt$', marker="o", color="tab:blue")
+        # if n_cost == 3 or n_cost == 4:
+        if n_cost == 4 or n_cost == 5:
+            plt.plot(tau_minus_mf_cost, label=r'$\int {m_f^{-}}^2 \; dt$', marker="o", color="tab:orange")
+            plt.plot(tau_plus_mf_cost, label=r'$\int {m_f^{+}}^2 \; dt$', marker="o", color="tab:red")
         plt.plot(shoulder_state_cost, label=r'$\int q_0^2 \; dt$', marker="o", color="tab:green")
         plt.plot(torque_derivative_cost, label=r'$\int {\delta \tau}^2 \; dt$', marker="o", color="tab:brown")
         # x-axis only show ticks for int
@@ -501,7 +703,8 @@ class Study:
 
     def plot_cpu_time(self):
         solutions = self.solution[0][1] if isinstance(self.solution[0], list) else self.solution[0]
-        cpu_time = [sol.real_time_to_optimize for sol in solutions] if isinstance(solutions, list) else [solutions.real_time_to_optimize]
+        cpu_time = [sol.real_time_to_optimize for sol in solutions] if isinstance(solutions, list) else [
+            solutions.real_time_to_optimize]
         plt.figure()
         plt.plot(cpu_time, marker="o")
         # x-axis only show ticks for int
@@ -510,7 +713,7 @@ class Study:
         plt.xlabel("Window")
         plt.ylabel("CPU time (s)")
         fig = plt.gcf()
-        self.export_matplotlib_figure(fig,self.name, "cpu_time")
+        self.export_matplotlib_figure(fig, self.name, "cpu_time")
         plt.show()
 
     def generate_latex_table(self):
@@ -630,15 +833,15 @@ class Study:
 
     def prepare_and_get_results_dir(self):
         try:
-            os.mkdir("results")
+            os.mkdir(f"{self.result_folder}")
         except FileExistsError:
             pass
 
         try:
-            os.mkdir(f"results/{self.name}")
+            os.mkdir(f"{self.result_folder}/{self.name}")
         except FileExistsError:
             pass
-        return f"results/{self.name}"
+        return f"{self.result_folder}/{self.name}"
 
     def prepare_plot_data(self, data_type: DataType, key: str, font_size: int = 20):
         if not self._has_run:

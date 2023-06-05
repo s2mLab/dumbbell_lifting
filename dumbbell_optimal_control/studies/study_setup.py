@@ -6,6 +6,7 @@ class StudySetup:
     def __init__(
         self,
         model_path: str = "models/arm26.bioMod",
+        fatigue_stabilization_factor: float = 10,
         n_shoot_per_round_trip: int = 50,
         round_trip_time: float = 1,
         n_round_trips: int = 5,
@@ -23,6 +24,7 @@ class StudySetup:
         n_thread: int = 8,
     ):
         self.model_path = model_path
+        self.fatigue_stabilization_factor = fatigue_stabilization_factor
         self.n_shoot_per_round_trip = n_shoot_per_round_trip
         self.n_round_trips = n_round_trips
         self.n_round_trips_to_advance = n_round_trips_to_advance
@@ -42,7 +44,8 @@ class StudySetup:
                 _print_level=5,
                 _linear_solver="ma57",
                 _hessian_approximation="exact",
-                _max_iter=500,
+                _max_iter=3000,
+                # _max_iter=1,
             )
         self.use_sx = use_sx
         self.n_thread = n_thread
