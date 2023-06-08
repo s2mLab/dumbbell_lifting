@@ -116,11 +116,13 @@ def plot_clustered_stacked(dfall, labels=None, title="multiple stacked bar plot"
     return axe
 
 normalized_by_cycle = True
+remove_last_window = False
 
 data_df1 = np.zeros((2, 32))
 data_df2 = np.zeros((2, 32))
 data_df3 = np.zeros((2, 32))
 for i, result_file in enumerate(ResultFile):
+    print(result_file.name)
     data = load_data(result_file)
     # fill a column with the condition name
     data["result_file"] = result_file.name
@@ -131,34 +133,42 @@ for i, result_file in enumerate(ResultFile):
         nb_cycles = 32
     if "CONDITIONS" in result_file.value:
         data["WINDOW"] =  "Sliding-horizon"
-        data_slice = slice(0, data.__len__())
+        data_slice = slice(0, data.__len__() if not remove_last_window else data.__len__() - 1)
         row_idx = 1
         nb_cycles = data["time"].__len__() + 2
+        if remove_last_window:
+            nb_cycles -= 1
     try:
         if "FATIGUE_TORQUE" in result_file.value:
             data["COST"] = "FATIGUE_TORQUE"
             # time by total cycles
             if normalized_by_cycle:
-                data_df1[row_idx, data_slice] = sum(data["time"] ) / nb_cycles
+                data_time = data["time"][data_slice]
+                data_df1[row_idx, data_slice] = data_time / 60 / nb_cycles
+                print(data_time)
             else:
                 data_df1[row_idx, data_slice] = data["time"] / 60
-            print(sum(data["time"] ) / nb_cycles)
+
         if "ONLY_FATIGUE" in result_file.value:
             data["COST"] = "ONLY_FATIGUE"
             # time by total cycles
             if normalized_by_cycle:
-                data_df2[row_idx, data_slice] = sum(data["time"]) / nb_cycles
+                data_time = data["time"][data_slice]
+                data_df2[row_idx, data_slice] = data_time / 60 / nb_cycles
+                print(data_time)
             else:
                 data_df2[row_idx, data_slice] = data["time"] / 60
-            print(sum(data["time"]) / nb_cycles)
+
         if "ONLY_TORQUE" in result_file.value:
             data["COST"] = "ONLY_TORQUE"
             # time by total cycles
             if normalized_by_cycle:
-                data_df3[row_idx, data_slice] = sum(data["time"] ) / nb_cycles
+                data_time = data["time"][data_slice]
+                data_df3[row_idx, data_slice] = data_time / 60 / nb_cycles
+                print(data_time)
             else:
                 data_df3[row_idx, data_slice] = data["time"] / 60
-            print(sum(data["time"]) / nb_cycles)
+
     except:
         print(f"Error with {result_file}")
 
