@@ -156,6 +156,89 @@ class Conditions(Enum):
         ),
     )
 
+    CONDITIONS_FATIGUE_TORQUE_NO_STABILIZATION = StudyConfiguration(
+        studies=(
+            get_nmpc(Program.TORQUE_DRIVEN_XIA,
+                     StudySetup(
+                         round_trip_time=1,
+                         n_shoot_per_round_trip=50,
+                         n_round_trips_to_advance=1,
+                         n_round_trips=3,
+                         n_total_round_trips=60,
+                         split_controls=True,
+                         fatigue_stabilization_factor=0,
+                     ), ),
+        ),
+        rmse_index=None,
+        plot_options=PlotOptions(
+            title="Fast debugger",
+            legend_indices=None,
+            options=(
+                {"linestyle": "-"},
+                {"linestyle": "--"},
+                {"linestyle": "-"},
+                {"linestyle": "--"},
+                {"linestyle": "-"},
+            ),
+            to_degrees=True,
+        ),
+    )
+    CONDITIONS_ONLY_FATIGUE_NO_STABILIZATION = StudyConfiguration(
+        studies=(
+            get_nmpc(Program.TORQUE_DRIVEN_XIA_FATIGUE_ONLY,
+                     StudySetup(
+                         round_trip_time=1,
+                         n_shoot_per_round_trip=50,
+                         n_round_trips_to_advance=1,
+                         n_round_trips=3,
+                         n_total_round_trips=60,
+                         split_controls=True,
+                         fatigue_stabilization_factor=0,
+                     ), ),
+        ),
+        rmse_index=None,
+        plot_options=PlotOptions(
+            title="Fast debugger",
+            legend_indices=None,
+            options=(
+                {"linestyle": "-"},
+                {"linestyle": "--"},
+                {"linestyle": "-"},
+                {"linestyle": "--"},
+                {"linestyle": "-"},
+            ),
+            to_degrees=True,
+        ),
+    )
+
+    CONDITIONS_ONLY_TORQUE_NO_STABILIZATION = StudyConfiguration(
+        studies=(
+            get_nmpc(Program.TORQUE_DRIVEN_XIA_TORQUE_ONLY,
+                     StudySetup(
+                         round_trip_time=1,
+                         n_shoot_per_round_trip=50,
+                         n_round_trips_to_advance=1,
+                         n_round_trips=3,
+                         n_total_round_trips=60,
+                         split_controls=True,
+                         fatigue_stabilization_factor=0,
+                     ), ),
+        ),
+        rmse_index=None,
+        plot_options=PlotOptions(
+            title="Fast debugger",
+            legend_indices=None,
+            options=(
+                {"linestyle": "-"},
+                {"linestyle": "--"},
+                {"linestyle": "-"},
+                {"linestyle": "--"},
+                {"linestyle": "-"},
+            ),
+            to_degrees=True,
+        ),
+    )
+
     FULL_WINDOW_FATIGUE_TORQUE = StudyConfiguration(
         studies=(
             get_nmpc(Program.TORQUE_DRIVEN_XIA,
