@@ -144,17 +144,17 @@ for i, result_file in enumerate(ResultFile):
             # time by total cycles
             if normalized_by_cycle:
                 data_time = data["time"][data_slice]
-                data_df1[row_idx, data_slice] = data_time / 60 / nb_cycles
+                data_df1[row_idx, data_slice] = data_time / nb_cycles
                 print(data_time)
             else:
-                data_df1[row_idx, data_slice] = data["time"] / 60
+                data_df1[row_idx, data_slice] = data["time"]
 
         if "ONLY_FATIGUE" in result_file.value:
             data["COST"] = "ONLY_FATIGUE"
             # time by total cycles
             if normalized_by_cycle:
                 data_time = data["time"][data_slice]
-                data_df2[row_idx, data_slice] = data_time / 60 / nb_cycles
+                data_df2[row_idx, data_slice] = data_time / nb_cycles
                 print(data_time)
             else:
                 data_df2[row_idx, data_slice] = data["time"] / 60
@@ -164,7 +164,7 @@ for i, result_file in enumerate(ResultFile):
             # time by total cycles
             if normalized_by_cycle:
                 data_time = data["time"][data_slice]
-                data_df3[row_idx, data_slice] = data_time / 60 / nb_cycles
+                data_df3[row_idx, data_slice] = data_time / nb_cycles
                 print(data_time)
             else:
                 data_df3[row_idx, data_slice] = data["time"] / 60
