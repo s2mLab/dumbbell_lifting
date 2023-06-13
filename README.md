@@ -26,10 +26,9 @@ and includes scripts, models and materials to reproduce figures and results of t
 
 In order to run the code, you need to install the following packages from pyomeca:
 
-conda install -c conda-forge biorbd=1.9.9
-conda install -c conda-forge bioviz=2.3.0
-conda install -c conda-forge bioptim=3.0.1
-Extra dependencies are required to run the code.
+`conda install -c conda-forge biorbd=1.9.9`
+`conda install -c conda-forge bioviz=2.3.0`
+`conda install -c conda-forge bioptim=3.0.1`
 
 # Contents from the paper
 Predictive simulation of human motion could provide insight into optimal techniques. In repetitive or long-duration tasks, these simulations must predict fatigue-induced adaptation.  
