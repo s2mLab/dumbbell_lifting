@@ -1,0 +1,12 @@
+# create a dev conda environment with: `make create_env` or `conda env create -f environment.yml`
+name: dumbbell
+channels:
+- conda-forge
+- default
+dependencies:
+- python ==3.10
+- biorbd ==1.9.5
+- bioptim ==2.3.1
+- plotly ==5.10.0
+- matplotlib ==3.6.1
+- python-kaleido ==0.2.1
