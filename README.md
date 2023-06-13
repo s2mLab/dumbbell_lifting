@@ -22,7 +22,7 @@ and includes scripts, models and materials to reproduce figures and results of t
 | Type | Status |
 |---|---|
 | License | <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-success" alt="License"/></a> |
-| Zenodo  | TODO |
+| Zenodo  | [![DOI](https://zenodo.org/badge/521383672.svg)](https://zenodo.org/badge/latestdoi/521383672) |
 
 In order to run the code, you need to install the following packages from pyomeca:
 
